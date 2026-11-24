@@ -20,7 +20,7 @@ Brands come from chat or from Competitors in Business MD. Output goes to `meta-<
 | `meta-skill/TESTS.md` | Test log and scenarios |
 | `meta-skill/scripts/adlib.js` | Pasted into the Ad Library tab: loads, reads and snapshots ads |
 | `meta-skill/scripts/build.py` | Merges a run into the memory, scores, ranks, rebuilds the HTML |
-| `meta-sher/` | SHER's living file (first run: Malimarea, 25 Nov 2026) |
+| `meta-sher/` | SHER's living file: 124 ads from Bupbes, Maël, Malimarea, Cherie and Fanci Club (25 Nov 2026) |
 
 ## Open for discuss
 
@@ -31,9 +31,11 @@ Decided for v0.1 so the skill could run. Change any of them and the SKILL follow
 3. **Score weights.** Days up to 180, +15 per extra ad on the creative (up to 10), +10 for multiple versions, EU reach +10 at 10k / +20 at 100k. Group = best 3 average + 20 per extra brand. All picked, not measured.
 4. **Creative groups.** The card shows one ad's dates, but its group ("4 ads use this creative") can run longer (Malimarea 2187111091693389: card 22 May–19 Aug, a version ran to 26 Aug). v0.1 scores the card's dates. Opening every group would make runs much slower.
 5. **Countries.** The library only shows where an ad ran for ads that reached the EU (Transparency by location). Everything else has no country. Per-country searches would find more but multiply the run time.
-6. **Big brands.** Bupbes has ~830 ads. Loading stalls around 90–100 cards per search, so v0.1 may miss older ads. Options: split the search by date range or country, or a paid scraper (Apify, about $0.75 per 1,000 ads), which needs approval.
+6. **Big brands.** Bupbes has ~830 ads; loading stopped at 456 after ~10 minutes, so older ads may be missing. Options: split the search by date range or country, or a paid scraper (Apify, about $0.75 per 1,000 ads), which needs approval.
 7. **Snapshot quality.** Grids are screenshots of frames at about 300 px tall, enough to see the idea, not to reuse. Full-size frames would need a download.
-8. **Where this lives.** The skill is its own repo; the output for SHER sits here as `meta-sher/`. If it should move next to Business MD instead, say so.
+8. **Same copy, one row.** Videos and carousels with the same copy, format and card count are folded into one row (other IDs in the note). That matched every Bupbes case checked, but two Bupbes single images were folded the same way before the rule changed (1365127932258105, 1744620560314514); worth a look.
+9. **Business MD is out of date on Cherie.** It says Cherie runs no Meta ads of its own; its page "Cherie" has ~54 (search `cherieattire`, not "Cherie Attire"). Fanci Club really has none of its own.
+10. **Where this lives.** The skill is its own repo; the output for SHER sits here as `meta-sher/`. If it should move next to Business MD instead, say so.
 
 ## Research behind it
 

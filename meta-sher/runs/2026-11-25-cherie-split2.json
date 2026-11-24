@@ -1,0 +1,26 @@
+{
+ "date": "2026-11-25",
+ "searches": [],
+ "types_log": [],
+ "ads": [
+  {
+   "brand": "Cherie",
+   "advertiser": "Cherie",
+   "page_id": "",
+   "owner": "own",
+   "type": "new drop or collection",
+   "creatives": 1,
+   "versions": true,
+   "format": "image",
+   "media": 1,
+   "video_sec": "",
+   "body": "Explore Our Corset Collection",
+   "note": "also shown as 4073796869590156",
+   "id": "2286984178372849",
+   "status": "active",
+   "start": "2026-10-06",
+   "end": "",
+   "image": "images/2286984178372849.png"
+  }
+ ]
+}

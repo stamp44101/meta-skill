@@ -1,10 +1,10 @@
 ---
 name: meta-skill
 description: Collect competitors' working Meta ads (Facebook + Instagram) from the Ad Library into one living swipe file per brand (meta-<brand>), scored by how long they ran and how many ads share the creative, grouped by type. Use for Meta ad research, competitor ads, ad swipe files, or "Meta SKILL".
-version: 0.1
+version: 0.2
 ---
 
-# Meta SKILL — v0.1
+# Meta SKILL — v0.2
 
 Collects competitors' ads that kept running on Facebook and Instagram, as references for our Social Ads GTM. Every run adds to one living file and never replaces it.
 
@@ -24,42 +24,43 @@ Needs Claude in Chrome, signed in to Facebook (the Ad Library needs no account, 
 
 ### 1. Search each brand
 
-Open a new Chrome tab per brand with keyword search, **all statuses** (ended ads that ran long are most of what we keep), all countries, FB + IG only:
+Open a Chrome tab with keyword search, **all statuses** (ended ads that ran long are most of what we keep), all countries, FB + IG only:
 
 ```
-https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&media_type=all&publisher_platforms[0]=facebook&publisher_platforms[1]=instagram&search_type=keyword_unordered&q=<brand>
+https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&media_type=all&publisher_platforms[0]=facebook&publisher_platforms[1]=instagram&search_type=keyword_unordered&q=<brand or domain>
 ```
 
-Use `search_type=keyword_exact_phrase&q="<two words>"` for names that are common words (Fanci Club, Cherie Attire, Mael). The page-only view (`view_all_page_id`) shows nothing for brands with no live ads, so don't use it.
+Search the domain or handle (`bupbes`, `mael.vn`, `cherieattire`, `malimarea`); use `search_type=keyword_exact_phrase&q="<two words>"` for names that are common words (`"fanci club"`). The page-only view (`view_all_page_id`) shows nothing for brands with no live ads.
 
-After the page loads, paste all of `scripts/adlib.js` with `javascript_tool` (again after every navigation). Then:
+Install `scripts/adlib.js` once per tab: `window.name = String.raw` + the file in backticks + `; eval(window.name)`. `window.name` survives navigation in the tab, so after every navigation run `eval(window.name)` again.
 
-- `await MA.scroll(8)` until `grew` is 0. One call must stay under 45 s; if the tab freezes, take smaller steps.
-- `MA.brief()` lists every loaded ad: `[id, advertiser, a|e, start, end, creatives, versions, format]`. Results are cut off past ~1,500 characters, so filter or page in the page (`MA.rows(offset, 10)`) rather than printing everything.
+- `MA.autoscroll()` starts loading in the background and returns at once. Wait (10 s waits in `browser_batch`), then `MA.status()` until `done` is true. Never scroll inside one long call: past ~100 cards the tab freezes and the call times out. Big brands stall before the library's total (Bupbes: 456 of ~830); say so in the run log.
+- `MA.export(30, '<today>')` puts every loaded ad that ran 30+ days on the page as text and hides the rest; `get_page_text` then saves it to a file (it is padded past 50 KB on purpose; tool results are cut off past ~1,500 characters). `MA.clearOut()` restores the page.
+- `python3 -I scripts/build.py import <saved file> <Brand> "<own page names>" <today> > draft.json` turns it into a draft run: own vs other by advertiser name, and videos or carousels with the same copy and card count folded into one row (the other IDs go in the note). Single images are never folded: same copy often means different pictures.
 
 ### 2. Keep the working ads
 
-- **Keep only ads that ran 30+ days** (end date, or today if still active). Newer ads are not saved at all; a later run catches them.
-- **Whose ad:** the brand's own page is `own`. Another advertiser naming the brand (rental shop, stockist, shipper, gift shop, creator, magazine) is `other` and kept the same way. Drop ads that only match the word and aren't about the brand (keyword search returns toothpaste and padel clubs for "Mael").
-- For a kept ad with `eu_flag`, or whose creative group matters, `await MA.versions(id)` lists the versions (each with its own dates), and `await MA.eu(versionId)` reads EU reach and countries from Transparency by location. Then `MA.closeDialogs()`. Record countries only when the library shows them.
+- **Only ads that ran 30+ days** (end date, or today if still active). Newer ads are not saved at all; a later run catches them. `export` already applies this.
+- **Whose ad:** the brand's own page is `own`. Another advertiser naming the brand (rental shop, stockist, consignment, gift shop, creator) is `other` and kept the same way. Delete draft rows that only match the word (keyword search returns baby food for "mael").
+- EU reach: for a kept ad with `EU transparency`, `await MA.versions(id)` then `await MA.eu(versionId)`, then `MA.closeDialogs()`. Record countries only when the library shows them.
 
 ### 3. Snapshot grid per kept ad
 
 ```
-await MA.grid('<id>', 6, '<Brand> · <id>')        → {tiles, rows, video_sec, cut}
-computer zoom, region [0, 0, W, H], save_to_disk, scale 1
+await MA.grid('<id>', 6, '<Brand> · <id>')     → {tiles, rows, video_sec}
+computer zoom, region [0, 0, W, 0.35·H], save_to_disk   (W × H = the screenshot frame)
 python3 -I scripts/build.py trim <saved file> meta-<brand>/images/<id>.png
 ```
 
-`grid` lays every carousel card, or 6 frames across a video (one frame per card in a video carousel), on a dark layer top-left, and reads the video length. W is the screenshot frame width; H is 35% of the frame height for 1 row, 66% for 2 rows, full for more. Always `scale 1`: the saved file has the returned size. Batch grid + zoom pairs in `browser_batch`, about 5 ads per batch. `MA.clearGrid()` at the end.
+`grid` lays every carousel card, or 6 frames across a video (one frame per card in a video carousel), in one row on a dark layer and reads the video length. Run it on the search page when it holds under ~100 cards. For big searches open the single-ad page `https://www.facebook.com/ads/library/?id=<id>`, `eval(window.name)`, then `grid`; if that page shows another ad of the same group (`ad not on page`), grid it from the search page. Batch about 6 ads (grid + zoom) per `browser_batch` and trim them right after, in order. Check each grid as it comes back: the picture also tells you the type.
 
 ### 4. Type every kept ad
 
-Group by the job the ad does, the way GTM SKILL's Create the list step works: merge types that do the same job, split one when its ads start to differ, and log every new type, merge, split or rename with the reason. Run 9's types are a starting point only: creator-fronted (@handle at the top), new drop or collection, catalogue product cards, discount or code, back in stock, customer quote, craft or making-of, someone else's ad naming the brand. Read the existing types in the TSV first and reuse them.
+Group by the job the ad does, the way GTM SKILL's Create the list step works: merge types that do the same job, split one when its ads start to differ, and log every new type, merge, split or rename with the reason. Run 9's types were the starting point: creator-fronted (@handle at the top), new drop or collection, catalogue product cards, discount or code, back in stock, customer quote, craft or making-of, someone else's ad naming the brand. The SHER file has since split "new drop or collection" into styled look, single piece spotlight and mood, no product named (see `types-log.tsv`). Read the existing types in the TSV first and reuse them.
 
 ### 5. Write the run and build
 
-Write `meta-<brand>/runs/<date>-<brand(s)>.json` (shape in the `build.py` docstring: searches, ads, types_log, retype), then:
+Fill `type` and `image` in the draft, add `searches` (brand, how, found, kept, note) and `types_log`, save it as `meta-<brand>/runs/<date>-<brand>.json` (shape in the `build.py` docstring; `retype` moves ads already in the file to a new type), then:
 
 ```
 python3 -I scripts/build.py meta-<brand> meta-<brand>/runs/<file>.json

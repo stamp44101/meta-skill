@@ -1,5 +1,6 @@
-// adlib.js — paste into the Meta Ad Library tab with javascript_tool after every navigation.
-// Installs window.MA. Every call returns compact JSON and never returns URLs or base64
+// adlib.js — install once per tab with javascript_tool:  window.name = String.raw`<this file>`; eval(window.name)
+// window.name survives navigation in the same tab, so after every navigation just run eval(window.name)
+// (paste the file again only in a new tab). Installs window.MA. Every call returns compact JSON and never returns URLs or base64
 // (the Chrome extension blocks query strings and long encoded data in tool results).
 // Keep each call under ~40 s: the tool times out at 45 s.
 (() => {
@@ -8,11 +9,12 @@
   const iso = s => { const m = (s || '').match(/(\d{1,2}) (\w{3}) (\d{4})/); if (!m) return '';
     const d = new Date(Date.UTC(+m[3], MON[m[2]], +m[1])); return d.toISOString().slice(0, 10); };
 
-  // The smallest element holding exactly one "Library ID: n" inside `root`.
+  // The smallest element holding exactly one "Library ID: n" inside root.
   function cardOf(node, root) {
     let e = node.parentElement;
+    // textContent, not innerText: innerText forces layout and freezes the tab past ~100 cards
     while (e.parentElement && e.parentElement !== root &&
-           (e.parentElement.innerText.match(/Library ID:/g) || []).length === 1) e = e.parentElement;
+           e.parentElement.textContent.split('Library ID:').length === 2) e = e.parentElement;
     return e;
   }
   function cards(root = document.body) {
@@ -55,14 +57,26 @@
   }
 
   window.MA = {
-    // Scroll to load more cards. Returns how many are loaded and whether the list stopped growing.
-    async scroll(times = 6) {
-      let before = mainCards().size;
-      for (let i = 0; i < times; i++) { window.scrollTo(0, document.body.scrollHeight); await sleep(1400); }
-      const now = mainCards().size, tot = (document.body.innerText.match(/~?([\d,]+) results?/) || [, ''])[1];
-      return JSON.stringify({ loaded: now, total: tot, grew: now - before });
+    // Count loaded cards cheaply (no layout).
+    count() { return document.body.textContent.split('Library ID:').length - 1; },
+    // Big searches freeze the tab if a single call scrolls for long, so scrolling runs in the
+    // background: autoscroll() starts it and returns at once; poll status() between short waits
+    // until done is true (the list stopped growing for ~30 s), then export().
+    autoscroll(every = 3000, idle = 10) {
+      clearInterval(window.__maScroll); window.__maLast = 0; window.__maSame = 0;
+      window.__maScroll = setInterval(() => {
+        const n = this.count();
+        if (n === window.__maLast) window.__maSame++; else { window.__maSame = 0; window.__maLast = n; }
+        if (window.__maSame > idle) clearInterval(window.__maScroll);
+        window.scrollTo(0, document.body.scrollHeight);
+      }, every);
+      return 'scrolling';
     },
-    // Parsed rows, a page at a time (keep limit ~25 so the result is not cut off).
+    status() {
+      const tot = (document.body.textContent.match(/~?([\d,]+) results/) || [, ''])[1];
+      return JSON.stringify({ loaded: this.count(), total: tot, done: window.__maSame > 10 });
+    },
+    // Parsed rows, a page at a time (keep limit small: results past ~1,500 characters are cut off).
     rows(offset = 0, limit = 25) {
       return JSON.stringify([...mainCards()].slice(offset, offset + limit).map(([id, c]) => parse(id, c)));
     },
@@ -103,16 +117,22 @@
         const b = [...d.querySelectorAll('[role=button]')].find(x => x.innerText.trim() === 'Close'); if (b) b.click(); }
       return 'ok';
     },
-    // Lay a snapshot grid of one ad over the page: every carousel card, and `frames` frames
+    // Lay a snapshot grid of one ad over the page: every carousel card, and frames frames
     // spread across each video. Returns the rectangle to capture with computer.zoom(save_to_disk).
     async grid(id, frames = 6, label = '') {
       document.getElementById('__ma_grid')?.remove();
-      const c = mainCards().get(id) || (document.querySelector('div[role=dialog]') && cards([...document.querySelectorAll('div[role=dialog]')].pop()).get(id));
-      if (!c) return JSON.stringify({ error: 'card not loaded' });
+      // open https://www.facebook.com/ads/library/?id=<id> first: one card, no freeze
+      for (let i = 0; i < 20 && !document.body.textContent.includes('Library ID: ' + id); i++) await sleep(500);
+      const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT,
+        { acceptNode: n => n.nodeValue.includes('Library ID: ' + id) ? 1 : 3 });
+      if (!w.nextNode()) return JSON.stringify({ error: 'ad not on page' });
+      const c = cardOf(w.currentNode, document.body);
+      await sleep(800);
       const H = 300, tiles = [];
       for (const img of [...c.querySelectorAll('img')].filter(i => i.naturalWidth > 100).slice(0, 10)) {
-        const i = new Image(); i.src = img.currentSrc || img.src; i.style.height = H + 'px'; tiles.push(i);
+        const i = new Image(); i.src = img.currentSrc || img.src; tiles.push(i);
       }
+      await Promise.all(tiles.map(t => t.decode().catch(() => {})));
       let dur = '';
       for (const v of [...c.querySelectorAll('video')].slice(0, 10)) {
         const src = v.currentSrc || v.src; if (!src) continue;
@@ -129,8 +149,12 @@
         }
       }
       if (!tiles.length) return JSON.stringify({ error: 'no media in card' });
+      // shrink tiles so every card or frame fits on one row (decision 10: keep every carousel card)
+      const asp = tiles.reduce((a, t) => a + (t.naturalWidth ? t.naturalWidth / t.naturalHeight : t.width / t.height), 0);
+      const fitH = Math.max(120, Math.min(H, Math.floor((innerWidth - 24 - 6 * (tiles.length - 1)) / asp)));
+      tiles.forEach(t => { t.style.height = fitH + 'px'; t.style.width = 'auto'; });
       // Full-screen dark layer with the tiles top-left. Capture it with one full-frame
-      // computer.zoom (save_to_disk); `build.py trim` cuts the empty dark area off afterwards.
+      // computer.zoom (save_to_disk); build.py trim cuts the empty dark area off afterwards.
       const g = document.createElement('div'); g.id = '__ma_grid';
       g.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#111;padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;align-items:flex-start';
       const cap = document.createElement('div');
@@ -138,12 +162,45 @@
       cap.style.cssText = 'flex-basis:100%;color:#ddd;font:13px system-ui;padding:0 2px 4px';
       g.appendChild(cap); tiles.forEach(t => g.appendChild(t)); document.body.appendChild(g);
       await sleep(900);
+      // if a tile still wraps (image sizes known late), shrink until everything is on one row
+      let fh = fitH; const nrows = () => new Set(tiles.map(t => Math.round(t.getBoundingClientRect().top))).size;
+      while (nrows() > 1 && fh > 110) { fh -= 12; tiles.forEach(t => t.style.height = fh + 'px'); await sleep(60); }
       const last = tiles[tiles.length - 1].getBoundingClientRect();
       const rows = new Set(tiles.map(t => Math.round(t.getBoundingClientRect().top))).size;
-      // zoom region: rows 1 -> top 35% of the frame height, rows 2 -> top 66%, else the full frame
+      // zoom region: top 35% of the frame height (one row); full frame if rows > 1
       return JSON.stringify({ tiles: tiles.length, rows, video_sec: dur, cut: last.bottom > innerHeight });
     },
     clearGrid() { document.getElementById('__ma_grid')?.remove(); return 'ok'; },
+    // Tool results are cut off past ~1,500 characters, so bulk data goes out through the page:
+    // export() parses every loaded ad that ran >= minDays, shows one line per ad (fields joined
+    // by " ¦ ", since page text turns tabs into spaces) in a full-page <article>, hides the rest,
+    // and pads it past 50 KB so get_page_text saves it to a file instead of printing it.
+    // Read that file with build.py import, then clearOut() to restore the page.
+    // Fields: id advertiser page_id status start end days creatives versions format media video_sec eu body
+    export(minDays = 30, today = new Date().toISOString().slice(0, 10)) {
+      this.clearOut();
+      const T = Date.parse(today), out = [];
+      let all = 0;
+      for (const [id, c] of mainCards()) {
+        const p = parse(id, c); all++;
+        const days = Math.round(((p.end ? Date.parse(p.end) : T) - Date.parse(p.start)) / 864e5);
+        if (!(days >= minDays)) continue;
+        out.push([p.id, p.advertiser, p.page_id, p.status, p.start, p.end, days, p.creatives, p.versions ? 1 : 0,
+          p.format, p.media, p.video_sec, p.eu_flag ? 1 : 0, p.body.replace(/\s+/g, ' ').replace(/¦/g, '|').slice(0, 220)].join(' ¦ '));
+      }
+      const art = document.createElement('article'); art.id = '__ma_out';
+      const pre = document.createElement('pre'); pre.style.cssText = 'white-space:pre-wrap;font:11px monospace';
+      pre.textContent = 'MA-EXPORT-START\n' + out.join('\n') + '\nMA-EXPORT-END\n' + ('.'.repeat(99) + '\n').repeat(520);
+      art.appendChild(pre);
+      for (const ch of document.body.children) { ch.dataset.maDisplay = ch.style.display; ch.style.display = 'none'; }
+      document.body.appendChild(art);
+      return JSON.stringify({ loaded: all, kept: out.length });
+    },
+    clearOut() {
+      document.getElementById('__ma_out')?.remove();
+      for (const ch of document.body.children) if ('maDisplay' in ch.dataset) { ch.style.display = ch.dataset.maDisplay; delete ch.dataset.maDisplay; }
+      return 'ok';
+    },
   };
   return 'MA ready';
 })();

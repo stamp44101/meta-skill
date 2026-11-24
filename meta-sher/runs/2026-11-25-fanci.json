@@ -1,0 +1,34 @@
+{
+ "date": "2026-11-25",
+ "types_log": [],
+ "searches": [
+  {
+   "brand": "Fanci Club",
+   "how": "exact phrase \"fanci club\", all statuses, all countries, FB+IG",
+   "found": 23,
+   "kept": 1,
+   "note": "No own ads (matches Business MD). Others naming it: Printemps, boutiques, stylists, magazines — all under 30 days except amado archive and the Starkitchen gift-shop ad already kept under Bupbes."
+  }
+ ],
+ "ads": [
+  {
+   "id": "4563110483977557",
+   "brand": "Fanci Club",
+   "advertiser": "amado archive",
+   "page_id": "",
+   "owner": "other",
+   "type": "someone else's ad naming the brand",
+   "status": "active",
+   "start": "2026-10-16",
+   "end": "",
+   "creatives": 2,
+   "versions": false,
+   "format": "carousel",
+   "media": 3,
+   "video_sec": "",
+   "body": "buy or rent your next look - luxury designer consignment Junya Wantanabe, Comme des Garçons, Issey Miyake, Vaquera, Rick Owens, Jean Paul Gaultier, Fanci Club, Christopher Esber and more",
+   "image": "images/4563110483977557.png",
+   "note": "Consignment store (buy or rent) listing Fanci Club among designer labels"
+  }
+ ]
+}

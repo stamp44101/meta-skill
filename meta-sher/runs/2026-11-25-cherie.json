@@ -1,0 +1,91 @@
+{
+ "date": "2026-11-25",
+ "searches": [
+  {
+   "brand": "Cherie",
+   "how": "keyword \"cherieattire\", all statuses, all countries, FB+IG",
+   "found": 39,
+   "kept": 9,
+   "note": "Business MD says Cherie runs no Meta ads of its own, but its page \"Cherie\" has ~54 ads (39 loaded), most with multiple versions (one image card each). The exact phrase \"cherie attire\" finds only 1 unrelated ad. 1 creator post (quinn_strawberrie) under 30 days."
+  }
+ ],
+ "types_log": [],
+ "ads": [
+  {
+   "id": "1691130932230322",
+   "brand": "Cherie",
+   "advertiser": "Cherie",
+   "page_id": "",
+   "owner": "own",
+   "type": "new drop or collection",
+   "status": "active",
+   "start": "2026-06-13",
+   "end": "",
+   "creatives": 2,
+   "versions": true,
+   "format": "image",
+   "media": 1,
+   "video_sec": "",
+   "body": "New Collection Drop – A Study in Lace",
+   "image": "images/1691130932230322.png",
+   "note": "also shown as 1651771456731632, 1034024059402783, 939162449148384, 921833234281769, 997997956262558, 1431264232177017"
+  },
+  {
+   "id": "1017219550708909",
+   "brand": "Cherie",
+   "advertiser": "Cherie",
+   "page_id": "",
+   "owner": "own",
+   "type": "new drop or collection",
+   "status": "active",
+   "start": "2026-07-01",
+   "end": "",
+   "creatives": 1,
+   "versions": true,
+   "format": "image",
+   "media": 1,
+   "video_sec": "",
+   "body": "Explore Our Corset Collection",
+   "image": "images/1017219550708909.png",
+   "note": "also shown as 2286984178372849, 4073796869590156, 29476670265260224, 1334380192019010, 2160397601239706"
+  },
+  {
+   "id": "1297892562520081",
+   "brand": "Cherie",
+   "advertiser": "Cherie",
+   "page_id": "",
+   "owner": "own",
+   "type": "single piece spotlight",
+   "status": "ended",
+   "start": "2026-05-26",
+   "end": "2026-09-03",
+   "creatives": 4,
+   "versions": true,
+   "format": "image",
+   "media": 1,
+   "video_sec": "",
+   "body": "Soft lace. Keyhole neckline. A top that feels like a love letter to femininity. The Bianca Top in White is the Primavera piece that goes with everything — and elevates everything. New from Cherie. Bianca Lace Top — Prima",
+   "image": "images/1297892562520081.png",
+   "note": "also shown as 999200175939837"
+  },
+  {
+   "id": "1032387226019126",
+   "brand": "Cherie",
+   "advertiser": "Cherie",
+   "page_id": "",
+   "owner": "own",
+   "type": "single piece spotlight",
+   "status": "ended",
+   "start": "2026-06-13",
+   "end": "2026-08-13",
+   "creatives": 1,
+   "versions": true,
+   "format": "image",
+   "media": 1,
+   "video_sec": "",
+   "body": "New in – corset-top, in cherry 🍒",
+   "image": "images/1032387226019126.png",
+   "note": ""
+  }
+ ]
+}

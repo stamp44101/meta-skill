@@ -1,0 +1,45 @@
+{
+ "date": "2026-11-25",
+ "searches": [],
+ "types_log": [],
+ "ads": [
+  {
+   "brand": "Cherie",
+   "advertiser": "Cherie",
+   "page_id": "",
+   "owner": "own",
+   "type": "new drop or collection",
+   "status": "ended",
+   "creatives": 1,
+   "versions": true,
+   "format": "image",
+   "media": 1,
+   "video_sec": "",
+   "body": "New Collection Drop – A Study in Lace",
+   "note": "",
+   "id": "939162449148384",
+   "start": "2026-06-13",
+   "end": "2026-08-18",
+   "image": "images/939162449148384.png"
+  },
+  {
+   "brand": "Cherie",
+   "advertiser": "Cherie",
+   "page_id": "",
+   "owner": "own",
+   "type": "new drop or collection",
+   "status": "ended",
+   "creatives": 1,
+   "versions": true,
+   "format": "image",
+   "media": 1,
+   "video_sec": "",
+   "body": "New Collection Drop – A Study in Lace",
+   "note": "",
+   "id": "921833234281769",
+   "start": "2026-07-14",
+   "end": "2026-09-04",
+   "image": "images/921833234281769.png"
+  }
+ ]
+}

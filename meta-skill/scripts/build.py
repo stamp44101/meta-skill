@@ -3,6 +3,7 @@
 
     python3 -I build.py <out_dir> [run.json ...]
     python3 -I build.py trim <capture.png> <out_dir>/images/<library_id>.png
+    python3 -I build.py import <export file> <Brand> "<own page names>" <YYYY-MM-DD>  > draft.json
 
 <out_dir> is meta-<brand>/ (e.g. meta-sher/). It holds:
     meta-<brand>.tsv   one row per kept ad, keyed by Library ID (the memory)
@@ -113,11 +114,11 @@ def merge(out, run, rows, types_log, runs_log):
         alias = False
         if not hit:  # the same creative shown under another Library ID (Meta groups change between runs)
             hit = next((r for r in rows if r["brand"] == a.get("brand") and (
-                f"also shown as {a['library_id']}" in r.get("note", "")
+                a["library_id"] in r.get("note", "")
                 or hamming(r["creative_hash"], a["creative_hash"]) <= 6)), None)
             alias = bool(hit)
         if hit and alias:
-            if f"also shown as {a['library_id']}" not in hit.get("note", ""):
+            if a["library_id"] not in hit.get("note", ""):
                 hit["note"] = (hit.get("note", "") + f" also shown as {a['library_id']}").strip()
             # one creative, one row: widest dates, the larger creative count, active if either is
             hit["start"] = min(hit["start"], a["start"]) if hit.get("start") and a.get("start") else hit.get("start") or a.get("start")
@@ -278,6 +279,58 @@ lb.onclick=()=>lb.style.display='none';document.onkeydown=e=>{{if(e.key==='Escap
     return path
 
 
+def norm(t):
+    return " ".join("".join(ch.lower() if ch.isalnum() else " " for ch in t).split())[:160]
+
+
+def import_export(path, brand, own_names, today):
+    """Turn an adlib.js export (page text saved by get_page_text) into a draft run.
+
+    One ad per creative: ads from the same advertiser with the same copy, format and card
+    count are one creative shown under several Library IDs. The draft keeps the longest-running
+    ID, the widest dates and the largest creative count, and lists the other IDs in the note.
+    The agent fills in type (and owner where the guess is wrong) and the image paths.
+    """
+    text = open(path, encoding="utf-8").read()
+    if path.endswith(".json"):
+        text = json.loads(text)[0]["text"]
+    text = text[text.find("MA-EXPORT-START"):text.find("MA-EXPORT-END")]
+    own = [o.strip().lower() for o in own_names.split(",") if o.strip()]
+    groups = {}
+    for line in text.split("\n")[1:]:
+        f = [x.strip() for x in line.split("¦")]
+        if len(f) < 14:
+            continue
+        lid, adv, pid, status, start, end, days, n, ver, fmt, media, vsec, eu, body = f[:14]
+        # single images with the same copy are often different pictures (multiple versions), so
+        # only videos and carousels are folded together here; build.py still merges exact image matches
+        key = (adv.lower(), norm(body), fmt, media) if fmt != "image" else (lid,)
+        ad = {"id": lid, "brand": brand, "advertiser": adv, "page_id": pid,
+              "owner": "own" if adv.lower() in own else "other", "type": "", "status": status,
+              "start": start, "end": end, "days": int(days), "creatives": int(n or 1), "versions": ver == "1",
+              "format": fmt, "media": int(media or 1), "video_sec": vsec, "eu_flag": eu == "1", "body": body, "image": ""}
+        g = groups.get(key)
+        if not g:
+            groups[key] = dict(ad, also=[])
+            continue
+        lead, other = (ad, g) if ad["days"] > g["days"] else (g, ad)
+        merged = dict(lead, also=g["also"] + [other["id"]])
+        merged["start"] = min(g["start"], ad["start"])
+        merged["status"] = "active" if "active" in (g["status"], ad["status"]) else "ended"
+        merged["end"] = "" if merged["status"] == "active" else max(g["end"], ad["end"])
+        merged["creatives"] = max(g["creatives"], ad["creatives"])
+        merged["versions"] = g["versions"] or ad["versions"]
+        merged["eu_flag"] = g["eu_flag"] or ad["eu_flag"]
+        groups[key] = merged
+    ads = []
+    for g in sorted(groups.values(), key=lambda x: -x["days"]):
+        also = g.pop("also")
+        g.pop("days")
+        g["note"] = ("also shown as " + ", ".join(also)) if also else ""
+        ads.append(g)
+    return {"date": today, "searches": [], "types_log": [], "ads": ads}
+
+
 def trim(src, dst):
     """Cut the dark empty area off a full-frame grid capture and save it as PNG."""
     from PIL import Image, ImageChops
@@ -294,6 +347,11 @@ def trim(src, dst):
 
 
 def main():
+    if len(sys.argv) >= 2 and sys.argv[1] == "import":
+        if len(sys.argv) != 6:
+            sys.exit("usage: build.py import <export file> <Brand> <own advertiser names, comma-separated> <YYYY-MM-DD>")
+        print(json.dumps(import_export(*sys.argv[2:6]), ensure_ascii=False, indent=1))
+        return
     if len(sys.argv) >= 2 and sys.argv[1] == "trim":
         if len(sys.argv) != 4:
             sys.exit("usage: build.py trim <capture.png> <out_dir>/images/<library_id>.png")

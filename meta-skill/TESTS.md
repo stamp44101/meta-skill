@@ -10,6 +10,17 @@
 - Types: "new drop or collection" (8), "discount or code" (1).
 - Re-ran the same run file: 0 added, 10 updated, logs not duplicated.
 
+### Run 2 — 25 Nov 2026, all five SHER competitors (v0.2)
+| Brand | Search | Loaded / library | Kept |
+|---|---|---|---|
+| Bupbes | keyword `bupbes` | 456 / ~830 | 89 (162 ads 30+ days, folded by creative) |
+| Maël | keyword `mael.vn` | 47 / ~65 | 18 (incl. a Thai rental shop renting a Maël piece) |
+| Malimarea | Run 1 | 91 / ~130 | 9 |
+| Cherie | keyword `cherieattire` | 39 / ~54 | 7 (Business MD said none) |
+| Fanci Club | phrase `"fanci club"` | 23 / ~29 | 1 (consignment store) + the gift-shop ad already under Bupbes |
+- 124 rows, 8 types. "new drop or collection" split three ways (styled look, single piece spotlight, mood, no product named); on-body range shots merged into catalogue product cards. All logged.
+- Fixes found by running it: scrolling in one call froze the tab past ~100 cards (now background `autoscroll` + `status`); results past ~1,500 characters are cut (now `export` → `get_page_text` file → `build.py import`); `window.name` keeps the script across navigation; single images with the same copy are different pictures (no longer folded).
+
 ### Scout — 25 Nov 2026, the five SHER competitors
 | Brand | Own ads | Ads by others |
 |---|---|---|
