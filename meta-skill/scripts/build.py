@@ -3,6 +3,7 @@
 
     python3 -I build.py <out_dir> [run.json ...]
     python3 -I build.py trim <capture.png> <out_dir>/images/<library_id>.png
+    python3 -I build.py check-images <out_dir>      (needs tesseract)
     python3 -I build.py import <export file> <Brand> "<own page names>" <YYYY-MM-DD>  > draft.json
 
 <out_dir> is meta-<brand>/ (e.g. meta-sher/). It holds:
@@ -331,6 +332,27 @@ def import_export(path, brand, own_names, today):
     return {"date": today, "searches": [], "types_log": [], "ads": ads}
 
 
+def check_images(out):
+    """Read the ID printed in each grid's caption (tesseract) and list files whose name disagrees.
+    Captures saved in a batch can come back out of order, so run this before every build."""
+    import glob, re, subprocess
+    from PIL import Image
+    bad = []
+    for f in sorted(glob.glob(os.path.join(out, "images", "*.png"))):
+        fid = os.path.basename(f)[:-4]
+        im = Image.open(f).convert("L")
+        h, w = max(18, int(im.height * 0.085)), min(im.width, 900)
+        im.crop((0, 0, w, h)).resize((w * 3, h * 3)).point(lambda v: 255 - v).save("/tmp/_cap.png")
+        t = subprocess.run(["tesseract", "/tmp/_cap.png", "-", "--psm", "7"], capture_output=True, text=True).stdout
+        m = re.search(r"(\d[\d ]{13,20}\d)", t)
+        got = m.group(1).replace(" ", "") if m else ""
+        if got != fid:
+            bad.append((fid, got, t.strip()[:50]))
+    for b in bad:
+        print(f"{b[0]}  caption reads {b[1] or '?'}  ({b[2]})")
+    print(f"{len(bad)} to look at (OCR misreads of 1-2 digits are fine; a different whole ID means the files are swapped)")
+
+
 def trim(src, dst):
     """Cut the dark empty area off a full-frame grid capture and save it as PNG."""
     from PIL import Image, ImageChops
@@ -347,6 +369,8 @@ def trim(src, dst):
 
 
 def main():
+    if len(sys.argv) == 3 and sys.argv[1] == "check-images":
+        return check_images(sys.argv[2].rstrip("/"))
     if len(sys.argv) >= 2 and sys.argv[1] == "import":
         if len(sys.argv) != 6:
             sys.exit("usage: build.py import <export file> <Brand> <own advertiser names, comma-separated> <YYYY-MM-DD>")

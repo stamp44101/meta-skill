@@ -52,7 +52,7 @@ computer zoom, region [0, 0, W, 0.35·H], save_to_disk   (W × H = the screensho
 python3 -I scripts/build.py trim <saved file> meta-<brand>/images/<id>.png
 ```
 
-`grid` lays every carousel card, or 6 frames across a video (one frame per card in a video carousel), in one row on a dark layer and reads the video length. Run it on the search page when it holds under ~100 cards. For big searches open the single-ad page `https://www.facebook.com/ads/library/?id=<id>`, `eval(window.name)`, then `grid`; if that page shows another ad of the same group (`ad not on page`), grid it from the search page. Batch about 6 ads (grid + zoom) per `browser_batch` and trim them right after, in order. Check each grid as it comes back: the picture also tells you the type.
+`grid` lays every carousel card, or 6 frames across a video (one frame per card in a video carousel), in one row on a dark layer and reads the video length. Run it on the search page when it holds under ~100 cards. For big searches open the single-ad page `https://www.facebook.com/ads/library/?id=<id>`, `eval(window.name)`, then `grid`; if that page shows another ad of the same group (`ad not on page`), grid it from the search page. Batch about 6 ads (grid + zoom) per `browser_batch` and trim them right after, in order; saved captures can come back out of order, so before building run `python3 -I scripts/build.py check-images meta-<brand>` and swap any file whose caption shows another ad's ID. Check each grid as it comes back: the picture also tells you the type.
 
 ### 4. Type every kept ad
 
