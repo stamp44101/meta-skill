@@ -352,8 +352,12 @@ def markets_table(out, rows, brands):
     for e in log:
         checked.setdefault(e["brand"], set()).add(e["country"])
     order = {c: k for k, c in enumerate(MARKETS)}
-    cols = sorted({c for r in rows for c in (x.strip() for x in r.get("countries", "").split(",")) if c},
-                  key=lambda c: (order.get(c, 99), c))
+    seen_any = {c for r in rows for c in (x.strip() for x in r.get("countries", "").split(",")) if c}
+    all_checked = set().union(*checked.values())
+    # every core market that was checked shows, zeros included (a 0 is a market nobody here is buying);
+    # extra markets show only where something was seen, the rest are named under the table
+    cols = sorted({c for c in all_checked if c in order} | seen_any, key=lambda c: (order.get(c, 99), c))
+    extra_zero = {b: sorted(c for c in cs if c not in cols) for b, cs in checked.items()}
     body = []
     for b in brands:
         mine = [r for r in rows if r["brand"] == b]
@@ -369,6 +373,7 @@ def markets_table(out, rows, brands):
     return (f'<h2>Where the kept ads ran <small>kept ads seen in each country with the Ad Library country filter</small></h2>'
             f'<table class="mx"><tr><th>brand (kept)</th>{"".join(f"<th>{c}</th>" for c in cols)}<th>not seen</th><th>countries checked</th></tr>{"".join(body)}</table>'
             f'<p class="stats">One ad can run in several countries, so a row adds up to more than its kept ads. '
+            f'{"".join(f"{esc(b)} also checked {', '.join(cs)}: none seen. " for b, cs in sorted(extra_zero.items()) if cs)}'
             f'"Not seen" means the country filter did not show it in any country checked: it may have run elsewhere, '
             f'or long pages stopped loading before reaching it. 0 = checked, none seen; · = not checked. Every check is in geo-log.tsv.</p>')
 
@@ -428,6 +433,7 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
                    f'<td>{esc(e.get("to"))}</td><td>{esc(e.get("reason"))}</td></tr>' for e in types_log[::-1])
     cut = [(x.get("brand"), x.get("under_30")) for x in runs_log if x.get("under_30")]
     cut_line = (" (left out: " + ", ".join(f"{b} {n}" for b, n in cut) + ")") if cut else ""
+    eu_n = sum(1 for r in rows if r.get("eu_reach"))
     chips = "".join(f'<button data-b="{esc(b)}">{esc(b)}</button>' for b in brands)
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(name)} — competitor Meta ads</title><style>
@@ -453,7 +459,7 @@ details{{margin-top:30px}}table{{border-collapse:collapse;width:100%;font-size:1
 #lb{{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:9}}#lb img{{max-width:96vw;max-height:94vh}}
 </style></head><body>
 <header><h1>{esc(name)} — competitor Meta ads that kept running</h1>
-<p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days (up to {DAY_CAP}) + {PER_CREATIVE} per extra ad using the creative (counted up to {CREATIVE_CAP} ads, so at most {PER_CREATIVE * CREATIVE_CAP} points) + 10 for multiple versions + EU reach bonus.
+<p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days (up to {DAY_CAP}) + {PER_CREATIVE} per extra ad using the creative (counted up to {CREATIVE_CAP} ads, so at most {PER_CREATIVE * CREATIVE_CAP} points) + 10 for multiple versions + EU reach bonus ({eu_n} of {len(rows)} ads have EU reach data{', so it moves no score yet' if not eu_n else ''}).
 Groups ranked by the best ad of each of their top {TOP_N} brands + {PER_BRAND} per extra brand, so one big brand can't carry a type. Each brand shows its best {SHOW_PER_BRAND} per group. Running long means the brand kept paying, not proof it sold. Short promo ads rarely reach {MIN_DAYS} days, so offers are under-represented here{cut_line}. Rebuilt {today.isoformat()} · {len(rows)} ads · {len(ranked)} types.</p></header>
 <nav><button class="on" data-b="">All brands</button>{chips}</nav>
 <main>{matrix}{markets_table(out, rows, brands)}{"".join(parts) or "<p>No ads kept yet.</p>"}
