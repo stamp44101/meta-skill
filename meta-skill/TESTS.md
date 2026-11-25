@@ -21,6 +21,17 @@
 - 124 rows, 8 types. "new drop or collection" split three ways (styled look, single piece spotlight, mood, no product named); on-body range shots merged into catalogue product cards. All logged.
 - Fixes found by running it: scrolling in one call froze the tab past ~100 cards (now background `autoscroll` + `status`); results past ~1,500 characters are cut (now `export` → `get_page_text` file → `build.py import`); `window.name` keeps the script across navigation; single images with the same copy are different pictures (no longer folded).
 
+### Run 3 — 25 Nov 2026, where the kept ads ran (v0.3)
+Each brand's search repeated with `country=XX` for 20 markets (Maël: 32), checking which of the 124 kept ads come back.
+| Brand | Kept ads seen | Main markets (kept ads seen) |
+|---|---|---|
+| Bupbes | 88 / 89 | KR 85, US 76, GB 72, CA 52, DE 51, AU 50, AE 47, VN 33, TH 32, HK 31 |
+| Maël | 8 / 18 | VN 7, TH 4, ID 3, KR 3 (10 own ads not seen in 32 markets) |
+| Malimarea | 9 / 9 | US 8, GB 8, AU 8; one ad in AE, FR, DE only |
+| Cherie | 7 / 7 | CA 7, GB 6, AU 3, US 1 |
+| Fanci Club | 1 / 1 | US |
+- Found by running it: the filter misses ads (Maël's VN search returns 20 of its ~64 ads, and 10 kept ads appear in no market), so "not seen" never means "did not run". Long pages stall while loading: a second pass with a small scroll jump added cards (Bupbes GB 185 → 266), so passes are added up. The CSP now blocks `eval`, so adlib.js is pasted after each navigation and `window.name` carries the ID list instead. Six tabs in parallel froze the browser on Bupbes-size pages; three worked. Replaying the library's own search request from the page was refused by the safety check, so the step uses the normal page only.
+
 ### Scout — 25 Nov 2026, the five SHER competitors
 | Brand | Own ads | Ads by others |
 |---|---|---|
@@ -55,6 +66,9 @@ Run each in a fresh chat with the skill installed. Mark ✅/❌.
 
 **T6 — Big brand.** `…: Bupbes`
 - [ ] Loads in steps under 45 s, reports if loading stalled before the library's total
+
+**T7 — Where it ran.** `…: Malimarea` after a run
+- [ ] Checks each market with the country filter, records `countries` and `geo-log.tsv`, and says "not seen in N markets" for the rest, never "did not run"
 
 ### Scoring
 Must pass: T1, T2, T5. Others: at least 2 of 3.

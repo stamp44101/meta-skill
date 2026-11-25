@@ -1,0 +1,120 @@
+#Malimarea|SG t=1 n=1 done=true hit=
+#Malimarea|VN t=0 n=0 done=true hit=
+#Malimarea|US t=110 n=72 done=true hit=0.2.3.4.5.6.8.9
+#Malimarea|GB t=110 n=77 done=false hit=0.1.2.3.4.5.6.8.9
+#Malimarea|AU t=99 n=73 done=true hit=0.2.3.4.5.6.8.9
+#Malimarea|CA t=35 n=26 done=true hit=
+#Malimarea|HK t=1 n=1 done=true hit=
+#Malimarea|PH t=0 n=0 done=true hit=
+#Malimarea|TW t=0 n=0 done=true hit=
+#Malimarea|TH t=5 n=2 done=true hit=
+#Maël|VN t=20 n=20 done=true hit=0.1.2.7.12.15.16
+#Maël|SG t=0 n=0 done=true hit=
+#Maël|US t=0 n=0 done=true hit=
+#Maël|ALL t=64 n=48 done=true hit=0.1.2.3.4.5.6.7.8.9.10.11.12.13.14.15.16.17.18
+#Maël|GB t=0 n=0 done=true hit=
+#Maël|AU t=0 n=0 done=true hit=
+#Maël|MY t=0 n=0 done=false hit=
+#Maël|KH t=0 n=0 done=false hit=
+#Maël|JP t=0 n=0 done=false hit=
+#Maël|KR t=3 n=3 done=false hit=1.2.12
+#Maël|ID t=4 n=4 done=false hit=1.2.12
+#Maël|FR t=7 n=6 done=false hit=
+#Maël|TH t=10 n=9 done=true hit=1.2.12.18
+#Maël|HK t=0 n=0 done=true hit=
+#Maël|TW t=0 n=0 done=true hit=
+#Maël|PH t=1 n=1 done=true hit=
+#Maël|NZ t=0 n=0 done=true hit=
+#Maël|CA t=0 n=0 done=true hit=
+#Maël|IN t=0 n=0 done=true hit=
+#Maël|AE t=0 n=0 done=true hit=
+#Maël|DE t=0 n=0 done=true hit=
+#Malimarea|MY t=0 n=0 done=true hit=
+#Malimarea|ID t=0 n=0 done=true hit=
+#Malimarea|KR t=0 n=0 done=true hit=
+#Malimarea|JP t=0 n=0 done=true hit=
+#Malimarea|NZ t=15 n=11 done=true hit=
+#Malimarea|IN t=0 n=0 done=true hit=
+#Malimarea|AE t=19 n=17 done=true hit=7
+#Malimarea|KH t=0 n=0 done=true hit=
+#Malimarea|FR t=15 n=12 done=true hit=7
+#Malimarea|DE t=12 n=10 done=true hit=7
+#Cherie|TH t=1 n=1 done=true hit=
+#Cherie|VN t=1 n=1 done=true hit=
+#Cherie|SG t=0 n=0 done=true hit=
+#Cherie|MY t=0 n=0 done=true hit=
+#Cherie|ID t=0 n=0 done=true hit=
+#Cherie|PH t=0 n=0 done=true hit=
+#Cherie|HK t=1 n=1 done=true hit=
+#Cherie|TW t=0 n=0 done=true hit=
+#Cherie|KR t=1 n=1 done=true hit=
+#Cherie|JP t=1 n=1 done=true hit=
+#Cherie|AU t=13 n=12 done=true hit=0.6.11
+#Cherie|NZ t=0 n=0 done=true hit=
+#Cherie|US t=12 n=10 done=true hit=6
+#Cherie|CA t=31 n=23 done=true hit=1.2.3.4.5.8.9.10.12.13.15
+#Cherie|GB t=25 n=17 done=true hit=1.2.3.4.7.8.9.10.13.15
+#Cherie|IN t=0 n=0 done=true hit=
+#Cherie|AE t=1 n=1 done=true hit=
+#Cherie|KH t=0 n=0 done=true hit=
+#Cherie|FR t=1 n=1 done=true hit=
+#Cherie|DE t=0 n=0 done=true hit=
+#Fanci Club|TH t=2 n=1 done=true hit=
+#Fanci Club|VN t=4 n=4 done=true hit=
+#Fanci Club|SG t=0 n=0 done=true hit=
+#Fanci Club|MY t=0 n=0 done=true hit=
+#Fanci Club|ID t=1 n=1 done=true hit=
+#Fanci Club|PH t=1 n=1 done=true hit=
+#Fanci Club|HK t=1 n=1 done=true hit=
+#Fanci Club|TW t=0 n=0 done=true hit=
+#Fanci Club|KR t=2 n=2 done=true hit=
+#Fanci Club|JP t=1 n=1 done=true hit=
+#Fanci Club|AU t=1 n=1 done=true hit=
+#Fanci Club|NZ t=0 n=0 done=true hit=
+#Fanci Club|US t=13 n=11 done=true hit=0
+#Fanci Club|CA t=7 n=5 done=true hit=
+#Fanci Club|GB t=15 n=12 done=true hit=
+#Fanci Club|IN t=1 n=1 done=true hit=
+#Fanci Club|AE t=2 n=2 done=true hit=
+#Fanci Club|KH t=0 n=0 done=true hit=
+#Fanci Club|FR t=10 n=10 done=true hit=
+#Fanci Club|DE t=3 n=3 done=true hit=
+#Bupbes|VN t=90 n=77 done=true hit=6.9.13.17.22.26.27.30.34.36.37.52.63.65.75.79.86.90.93.100.102.105.112.117.119.123.126.130.133.143.146.148.152.153
+#Bupbes|TH t=64 n=59 done=true hit=6.9.13.17.22.26.27.30.34.36.37.52.63.65.75.79.86.90.100.102.105.112.117.119.123.126.130.133.143.146.148.152.153
+#Bupbes|SG t=0 n=0 done=true hit=
+#Bupbes|MY t=0 n=0 done=true hit=
+#Bupbes|ID t=1 n=1 done=true hit=
+#Bupbes|PH t=1 n=1 done=true hit=
+#Bupbes|HK t=76 n=67 done=true hit=6.9.13.17.22.26.27.30.34.36.37.52.63.65.75.79.86.90.100.102.105.112.117.119.123.126.130.133.146.148.152.153
+#Bupbes|TW t=0 n=0 done=true hit=
+#Bupbes|KR t=360 n=215 done=false hit=0.1.2.3.4.5.7.8.9.12.13.15.17.18.19.22.23.25.26.27.29.30.32.34.36.37.38.40.41.42.43.44.45.46.47.49.51.52.53.54.55.56.57.58.59.60.61.62.63.64.65.66.67.70.71.72.73.74.75.76.77.79.80.81.82.83.84.85.86.88.90.92.94.95.96.97.99.100.101.102.103.105.106.109.110.113.114.116.117.118.119.121.123.124.125.128.129.130.132.133.134.136.137.139.140.142.146.147.148.151.152.153.154.156
+#Bupbes|US t=590 n=189 done=false hit=1.2.3.5.8.9.10.12.13.14.15.16.17.18.22.26.27.30.34.35.36.37.41.42.46.47.49.52.53.54.55.56.57.58.59.60.61.62.63.64.67.69.71.75.76.78.79.82.83.84.85.86.89.90.94.95.96.97.99.100.102.104.105.108.110.111.113.117.118.119.120.122.123.125.126.129.130.131.132.133.135.136.137.140.146.148.149.152.153.161
+#Bupbes|AE t=190 n=150 done=false hit=0.5.8.11.12.18.19.23.25.29.32.38.40.43.44.51.64.66.70.71.73.74.76.80.81.88.92.99.101.103.106.107.109.110.113.114.116.118.121.124.125.128.129.132.134.136.139.140.142.147.151.154.156.158.159
+#Bupbes|KR t=360 n=294 done=true hit=0.1.2.3.4.5.7.8.9.11.12.13.15.17.18.19.21.22.23.25.26.27.29.30.32.34.36.37.38.40.41.42.43.44.45.46.47.48.49.50.51.52.53.54.55.56.57.58.59.60.61.62.63.64.65.66.67.70.71.72.73.74.75.76.77.79.80.81.82.83.84.85.86.88.90.92.94.95.96.97.99.100.101.102.103.105.106.109.110.113.114.116.117.118.119.121.123.124.125.128.129.130.132.133.134.136.137.139.140.141.142.146.147.148.151.152.153.154.156.158.159
+#Bupbes|US t=590 n=296 done=true hit=1.2.3.4.5.8.9.10.12.13.14.15.16.17.18.20.22.24.26.27.28.30.31.33.34.35.36.37.39.41.42.45.46.47.48.49.50.52.53.54.55.56.57.58.59.60.61.62.63.64.67.69.71.75.76.78.79.82.83.84.85.86.87.89.90.91.94.95.96.97.99.100.102.104.105.108.110.111.113.115.117.118.119.120.122.123.125.126.129.130.131.132.133.135.136.137.138.140.143.144.145.146.148.149.150.152.153.155.157.161
+#Bupbes|AE t=190 n=155 done=true hit=0.5.8.11.12.18.19.23.25.29.32.38.40.43.44.51.64.66.70.71.73.74.76.80.81.88.92.99.101.103.106.107.109.110.113.114.116.118.121.124.125.128.129.132.134.136.139.140.142.147.151.154.156.158.159
+#Bupbes|JP t=58 n=46 done=true hit=6.9.13.17.22.26.34.37.52.63.75.86.102.105.112.117.123.126.130.133.148.152.153
+#Bupbes|AU t=350 n=183 done=true hit=0.5.6.7.8.9.12.13.17.18.19.22.23.25.26.27.29.30.32.34.36.37.38.40.43.44.51.52.63.64.66.68.70.71.72.73.74.75.76.77.79.80.81.86.88.90.92.99.100.101.102.103.105.106.107.109.110.113.114.116.117.118.119.123.124.125.126.128.129.130.132.133.134.136.139.140.142.146.147.148.151.152.153.154.156
+#Bupbes|GB t=580 n=185 done=true hit=1.2.3.5.8.9.12.14.15.16.17.18.26.27.31.33.34.35.37.41.42.46.47.49.53.54.55.56.57.58.59.60.61.62.63.64.67.69.71.75.78.79.82.83.84.85.86.87.89.94.95.96.97.99.100.102.104.105.106.108.110.111.113.117.118.120.122.125.126.129.130.131.132.133.135.136.137.140.145.148.149.153.161
+#Bupbes|NZ t=0 n=0 done=true hit=
+#Bupbes|GB t=580 n=266 done=true hit=1.2.3.4.5.8.9.12.14.15.16.17.18.20.24.26.27.31.33.34.35.37.39.41.42.45.46.47.49.50.53.54.55.56.57.58.59.60.61.62.63.64.67.69.71.75.78.79.82.83.84.85.86.87.89.91.94.95.96.97.99.100.102.104.105.106.108.110.111.113.115.117.118.120.122.125.126.129.130.131.132.133.135.136.137.138.140.144.145.148.149.150.153.155.157.161
+#Bupbes|AU t=350 n=129 done=true hit=0.5.6.7.8.9.12.13.17.18.22.25.26.27.29.30.32.34.36.37.44.52.63.64.66.68.70.71.72.73.74.75.76.77.79.81.86.90.99.100.101.102.103.105.106.109.110.113.114.116.117.118.119.123.125.126.128.129.130.132.133.134.136.140.146.148.152.153
+#Bupbes|US t=590 n=131 done=true hit=1.3.5.8.12.13.15.17.18.22.26.27.30.34.35.36.37.41.42.46.47.49.53.54.56.57.58.59.60.61.62.63.64.67.71.75.76.79.82.83.84.85.86.94.95.96.97.99.100.102.105.110.111.113.117.118.119.123.125.126.129.130.132.133.135.136.137.140.148.152.153.161
+#Bupbes|IN t=0 n=0 done=true hit=
+#Bupbes|CA t=310 n=265 done=true hit=0.5.7.8.9.11.12.13.17.18.19.22.23.25.26.27.29.30.32.34.36.37.38.40.43.44.51.52.64.65.66.68.70.71.72.73.74.75.76.77.79.80.81.86.88.90.92.99.100.101.102.103.105.106.107.109.110.113.114.116.117.118.121.123.124.125.126.128.129.130.132.133.134.136.139.140.142.146.147.148.151.152.153.154.156.158.159
+#Bupbes|KH t=0 n=0 done=true hit=
+#Bupbes|FR t=140 n=118 done=true hit=6.13.22.26.27.30.34.36.37.52.63.86.90.100.102.105.112.117.123.126.130.133.143.146.148.152.153
+#Bupbes|DE t=220 n=181 done=true hit=0.5.7.8.11.12.18.19.22.23.25.26.27.29.32.34.38.40.43.44.51.64.66.68.70.71.72.73.74.76.77.80.81.86.88.90.92.99.100.101.102.103.105.106.107.109.110.113.114.116.118.119.121.123.124.125.126.128.129.132.134.136.139.140.142.146.147.151.154.156.158.159
+#Malimarea|GB t=110 n=77 done=false hit=0.1.2.3.4.5.6.8.9
+#Maël|LA t=0 n=0 done=true hit=
+#Maël|MM t=0 n=0 done=true hit=
+#Maël|MO t=0 n=0 done=true hit=
+#Maël|BN t=0 n=0 done=true hit=
+#Maël|BD t=0 n=0 done=true hit=
+#Maël|LK t=0 n=0 done=true hit=
+#Maël|SA t=0 n=0 done=true hit=
+#Maël|QA t=0 n=0 done=true hit=
+#Maël|NL t=0 n=0 done=true hit=
+#Maël|IT t=0 n=0 done=true hit=
+#Maël|ES t=0 n=0 done=true hit=
+#Maël|CH t=0 n=0 done=true hit=

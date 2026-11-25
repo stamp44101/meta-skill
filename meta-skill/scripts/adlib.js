@@ -1,6 +1,5 @@
-// adlib.js — install once per tab with javascript_tool:  window.name = String.raw`<this file>`; eval(window.name)
-// window.name survives navigation in the same tab, so after every navigation just run eval(window.name)
-// (paste the file again only in a new tab). Installs window.MA. Every call returns compact JSON and never returns URLs or base64
+// adlib.js — paste the whole file into javascript_tool after every navigation (the Ad Library's CSP now blocks eval,
+// so the old window.name + eval install no longer works; window.name is used by geo.js for data instead). Installs window.MA. Every call returns compact JSON and never returns URLs or base64
 // (the Chrome extension blocks query strings and long encoded data in tool results).
 // Keep each call under ~40 s: the tool times out at 45 s.
 (() => {

@@ -5,11 +5,14 @@
     python3 -I build.py trim <capture.png> <out_dir>/images/<library_id>.png
     python3 -I build.py check-images <out_dir>      (needs tesseract)
     python3 -I build.py import <export file> <Brand> "<own page names>" <YYYY-MM-DD>  > draft.json
+    python3 -I build.py geo-ids <out_dir> <Brand>            prints the line that loads the brand's IDs into the tab
+    python3 -I build.py geo <out_dir> <results file> <YYYY-MM-DD>   fills `countries` from per-country checks
 
 <out_dir> is meta-<brand>/ (e.g. meta-sher/). It holds:
     meta-<brand>.tsv   one row per kept ad, keyed by Library ID (the memory)
     types-log.tsv      every new type, merge, split and rename, with the reason
     runs-log.tsv       every brand search: when, how, found, kept
+    geo-log.tsv        every per-country check: brand, country, results, cards loaded, kept ads seen
     images/<id>.png    one snapshot grid per ad
     meta-<brand>.html  rebuilt on every call from the files above; opens on its own
 
@@ -38,8 +41,12 @@ PER_CREATIVE = 5     # points for every extra ad using the same creative (kept s
 CREATIVE_CAP = 10    # ...counted up to 10 extra ads
 TOP_N = 3            # a group is scored on the best ad of each of its top N brands
 SHOW_PER_BRAND = 4   # a group shows each brand's best 4 ads; the rest sit behind "show more"
-FLIGHT_MIN = 5       # this many ads from one brand ending the same day = a campaign end, flagged
+FLIGHT_MIN = 5       # this many ads from one brand ending within FLIGHT_DAYS of each other = a campaign end, flagged
+FLIGHT_DAYS = 3
 PER_BRAND = 20       # points for every extra brand running the type
+# markets checked one by one with the Ad Library country filter (README: Open for discuss 4)
+MARKETS = "TH VN SG MY ID PH HK TW KR JP AU NZ US CA GB IN AE KH FR DE".split()
+GL = ["date", "brand", "country", "results", "cards", "complete", "seen"]
 
 
 def read_tsv(path, cols):
@@ -65,6 +72,22 @@ def dhash(path):
         im = im.crop((0, im.height // 10, im.width, im.height))  # skip the caption line
         im = im.resize((9, 8))
         px = list(im.tobytes())
+        bits = "".join("1" if px[r * 9 + c] > px[r * 9 + c + 1] else "0" for r in range(8) for c in range(8))
+        return "%016x" % int(bits, 2)
+    except Exception:
+        return ""
+
+
+def first_tile_hash(path):
+    """dHash of the first card or frame of a grid, so one picture shown as a single image and as
+    the first card of a carousel still matches."""
+    try:
+        from PIL import Image
+        im = Image.open(path).convert("L")
+        h = im.height
+        top = int(h * 0.1)
+        t = im.crop((6, top, 6 + int((h - top) * 0.78), h - 4)).resize((9, 8))
+        px = list(t.tobytes())
         bits = "".join("1" if px[r * 9 + c] > px[r * 9 + c + 1] else "0" for r in range(8) for c in range(8))
         return "%016x" % int(bits, 2)
     except Exception:
@@ -170,15 +193,32 @@ def merge(out, run, rows, types_log, runs_log):
 
 def rescore(rows, today):
     from collections import Counter
-    ends = Counter((r["brand"], r["end"]) for r in rows if r.get("status") == "ended" and r.get("end"))
+    from datetime import date as _d
+    ended = [r for r in rows if r.get("status") == "ended" and r.get("end")]
     copies = Counter((r["brand"], norm(r.get("body", ""))) for r in rows)
     for r in rows:
         r["days"] = days_of(r, today)
         r["score"] = score(r)
-        n = ends.get((r["brand"], r.get("end")), 0) if r.get("status") == "ended" else 0
-        r["_flight"] = f"ended with {n - 1} other {r['brand']} ads the same day (campaign end, not a verdict on this ad)" if n >= FLIGHT_MIN else ""
-        c = copies[(r["brand"], norm(r.get("body", "")))]
-        r["_copies"] = f"same copy as {c - 1} other ad{'s' if c > 2 else ''} here, different picture" if c > 1 and norm(r.get("body", "")) else ""
+        r["_flight"] = ""
+        if r.get("status") == "ended" and r.get("end"):
+            e = _d.fromisoformat(r["end"])
+            near = [x for x in ended if x["brand"] == r["brand"] and abs((_d.fromisoformat(x["end"]) - e).days) <= FLIGHT_DAYS]
+            if len(near) >= FLIGHT_MIN:
+                lo = min(x["end"] for x in near); hi = max(x["end"] for x in near)
+                r["_flight"] = (f"ended with {len(near) - 1} other {r['brand']} ads between {lo} and {hi} "
+                                "(a campaign end, not a verdict on this ad)")
+        same = [x for x in rows if x is not r and x["brand"] == r["brand"] and norm(x.get("body", "")) == norm(r.get("body", "")) and norm(r.get("body", ""))]
+        if same:
+            twin = sum(1 for x in same if hamming(x.get("_ft", ""), r.get("_ft", "")) <= 3)
+            other = len(same) - twin
+            bits = []
+            if other:
+                bits.append(f"same copy as {other} other ad{'s' if other > 1 else ''} here with a different picture")
+            if twin:
+                bits.append(f"same copy and picture as {twin} other ad{'s' if twin > 1 else ''} here in another format")
+            r["_copies"] = "; ".join(bits)
+        else:
+            r["_copies"] = ""
 
 
 def rank(rows):
@@ -241,6 +281,98 @@ def group_stats(ads):
     return " · ".join(parts)
 
 
+def geo_ids(out, brand):
+    """Print the JS line that stores the brand's kept IDs (and their alias IDs) in the tab; save the order."""
+    import re
+    name = os.path.basename(os.path.abspath(out))
+    rows = [r for r in read_tsv(os.path.join(out, f"{name}.tsv"), COLS) if r["brand"] == brand]
+    if not rows:
+        sys.exit(f"no rows for {brand}")
+    pairs = []
+    for r in rows:
+        for i in [r["library_id"]] + re.findall(r"\d{14,17}", r.get("note", "")):
+            pairs.append([i, r["library_id"]])
+    path = os.path.join(out, "geo-ids.json")
+    allids = json.load(open(path, encoding="utf-8")) if os.path.exists(path) else {}
+    allids[brand] = pairs
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(allids, f, ensure_ascii=False)
+    ids = " ".join(i for i, _ in pairs)
+    print(f"window.name=JSON.stringify({{b:{json.dumps(brand)},W:'{ids}'.split(' ')}});'set'")
+
+
+def geo(out, results, day):
+    """Read `#Brand|CC t=.. n=.. done=.. hit=i.j.k` lines (indexes into geo-ids.json), fill `countries`, log every check.
+    Several checks of one country add up: a long page often loads more cards on a second pass."""
+    import re
+    name = os.path.basename(os.path.abspath(out))
+    ids = json.load(open(os.path.join(out, "geo-ids.json"), encoding="utf-8"))
+    tsv = os.path.join(out, f"{name}.tsv")
+    rows = read_tsv(tsv, COLS)
+    checks = {}
+    for line in open(results, encoding="utf-8"):
+        m = re.match(r"#(.+?)\|(\w+) t=(\S*) n=(\d+) done=(\w+) hit=(\S*)", line.strip())
+        if not m or m.group(2) == "ALL" or m.group(1) not in ids:
+            continue
+        b, cc, t, n, done, h = m.groups()
+        c = checks.setdefault((b, cc), {"hits": set(), "t": t, "n": 0, "done": False})
+        c["hits"] |= {int(x) for x in h.split(".") if x}
+        c["n"], c["t"] = max(c["n"], int(n)), t or c["t"]
+        c["done"] = c["done"] or done == "true"
+    seen = {}
+    for (b, cc), c in checks.items():
+        for i in c["hits"]:
+            seen.setdefault(ids[b][i][1], set()).add(cc)
+    order = {c: k for k, c in enumerate(MARKETS)}
+    checked_brands = {b for b, _ in checks}
+    for r in rows:
+        if r["brand"] in checked_brands:
+            have = {x.strip() for x in r.get("countries", "").split(",") if x.strip()} | seen.get(r["library_id"], set())
+            r["countries"] = ", ".join(sorted(have, key=lambda c: (order.get(c, 99), c)))
+    write_tsv(tsv, rows, COLS)
+    gl = os.path.join(out, "geo-log.tsv")
+    log = read_tsv(gl, GL)
+    for (b, cc), c in sorted(checks.items(), key=lambda x: (x[0][0], order.get(x[0][1], 99))):
+        kept_here = len({ids[b][i][1] for i in c["hits"]})
+        log.append({"date": day, "brand": b, "country": cc, "results": c["t"], "cards": c["n"],
+                    "complete": "yes" if c["done"] else "no", "seen": kept_here})
+    write_tsv(gl, log, GL)
+    for b in sorted(checked_brands):
+        mine = [r for r in rows if r["brand"] == b]
+        print(f"{b}: {sum(1 for r in mine if r['countries'])}/{len(mine)} kept ads seen in at least one of "
+              f"{len({cc for bb, cc in checks if bb == b})} countries")
+
+
+def markets_table(out, rows, brands):
+    """Brand x country: kept ads seen there. Only countries where something was seen get a column."""
+    log = read_tsv(os.path.join(out, "geo-log.tsv"), GL)
+    if not log:
+        return ""
+    checked = {}
+    for e in log:
+        checked.setdefault(e["brand"], set()).add(e["country"])
+    order = {c: k for k, c in enumerate(MARKETS)}
+    cols = sorted({c for r in rows for c in (x.strip() for x in r.get("countries", "").split(",")) if c},
+                  key=lambda c: (order.get(c, 99), c))
+    body = []
+    for b in brands:
+        mine = [r for r in rows if r["brand"] == b]
+        if b not in checked:
+            body.append(f'<tr><th>{esc(b)}</th><td colspan="{len(cols) + 1}" class="nil">not checked</td></tr>')
+            continue
+        cells = []
+        for c in cols:
+            n = sum(1 for r in mine if c in {x.strip() for x in r.get("countries", "").split(",")})
+            cells.append(f'<td>{n}</td>' if n else ('<td class="nil">0</td>' if c in checked[b] else '<td class="nil">·</td>'))
+        unseen = sum(1 for r in mine if not r.get("countries"))
+        body.append(f'<tr><th>{esc(b)} <small>({len(mine)})</small></th>{"".join(cells)}<td>{unseen}</td><td>{len(checked[b])}</td></tr>')
+    return (f'<h2>Where the kept ads ran <small>kept ads seen in each country with the Ad Library country filter</small></h2>'
+            f'<table class="mx"><tr><th>brand (kept)</th>{"".join(f"<th>{c}</th>" for c in cols)}<th>not seen</th><th>countries checked</th></tr>{"".join(body)}</table>'
+            f'<p class="stats">One ad can run in several countries, so a row adds up to more than its kept ads. '
+            f'"Not seen" means the country filter did not show it in any country checked: it may have run elsewhere, '
+            f'or long pages stopped loading before reaching it. 0 = checked, none seen; · = not checked. Every check is in geo-log.tsv.</p>')
+
+
 def html(out, name, rows, types_log, runs_log, today, notes=None):
     notes = notes or {}
     ranked = rank(rows)
@@ -269,7 +401,7 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
                     "multiple versions" if r.get("versions") == "yes" else "",
                     r.get("format", "") + (f' · {r["video_sec"]}s' if r.get("video_sec") else ""),
                     f'EU reach {int(float(r["eu_reach"])):,}' if r.get("eu_reach") else "",
-                    r.get("countries", "")]
+                    ("seen in " + r["countries"]) if r.get("countries") else ""]
             flags = [f for f in (r.get("_flight"), r.get("_copies")) if f]
             cards.append(
                 f'<article data-brand="{esc(r["brand"])}"{" class=more" if extra else ""}><div class="snap">{img}</div><div class="info">'
@@ -291,9 +423,11 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
                      f'<div class="stats">{esc(group_stats(ads))}</div>{note}'
                      f'<div class="grid">{"".join(cards)}</div>{more}</section>')
     runs = "".join(f'<tr><td>{esc(s.get("date"))}</td><td>{esc(s.get("brand"))}</td><td>{esc(s.get("how"))}</td>'
-                   f'<td>{esc(s.get("found"))}</td><td>{esc(s.get("kept"))}</td><td>{esc(s.get("note"))}</td></tr>' for s in runs_log[::-1])
+                   f'<td>{esc(s.get("found"))}</td><td>{esc(s.get("kept"))}</td><td>{esc(s.get("under_30", ""))}</td><td>{esc(s.get("note"))}</td></tr>' for s in runs_log[::-1])
     tlog = "".join(f'<tr><td>{esc(e.get("date"))}</td><td>{esc(e.get("action"))}</td><td>{esc(e.get("from"))}</td>'
                    f'<td>{esc(e.get("to"))}</td><td>{esc(e.get("reason"))}</td></tr>' for e in types_log[::-1])
+    cut = [(x.get("brand"), x.get("under_30")) for x in runs_log if x.get("under_30")]
+    cut_line = (" (left out: " + ", ".join(f"{b} {n}" for b, n in cut) + ")") if cut else ""
     chips = "".join(f'<button data-b="{esc(b)}">{esc(b)}</button>' for b in brands)
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(name)} — competitor Meta ads</title><style>
@@ -319,11 +453,11 @@ details{{margin-top:30px}}table{{border-collapse:collapse;width:100%;font-size:1
 #lb{{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:9}}#lb img{{max-width:96vw;max-height:94vh}}
 </style></head><body>
 <header><h1>{esc(name)} — competitor Meta ads that kept running</h1>
-<p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days (up to {DAY_CAP}) + {PER_CREATIVE} per extra ad using the creative (up to {CREATIVE_CAP}) + 10 for multiple versions + EU reach bonus.
-Groups ranked by the best ad of each of their top {TOP_N} brands + {PER_BRAND} per extra brand, so one big brand can't carry a type. Each brand shows its best {SHOW_PER_BRAND} per group. Running long means the brand kept paying, not proof it sold. Rebuilt {today.isoformat()} · {len(rows)} ads · {len(ranked)} types.</p></header>
+<p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days (up to {DAY_CAP}) + {PER_CREATIVE} per extra ad using the creative (counted up to {CREATIVE_CAP} ads, so at most {PER_CREATIVE * CREATIVE_CAP} points) + 10 for multiple versions + EU reach bonus.
+Groups ranked by the best ad of each of their top {TOP_N} brands + {PER_BRAND} per extra brand, so one big brand can't carry a type. Each brand shows its best {SHOW_PER_BRAND} per group. Running long means the brand kept paying, not proof it sold. Short promo ads rarely reach {MIN_DAYS} days, so offers are under-represented here{cut_line}. Rebuilt {today.isoformat()} · {len(rows)} ads · {len(ranked)} types.</p></header>
 <nav><button class="on" data-b="">All brands</button>{chips}</nav>
-<main>{matrix}{"".join(parts) or "<p>No ads kept yet.</p>"}
-<details><summary>Searches ({len(runs_log)})</summary><table><tr><th>Date</th><th>Brand</th><th>How</th><th>Found</th><th>Kept</th><th>Note</th></tr>{runs}</table></details>
+<main>{matrix}{markets_table(out, rows, brands)}{"".join(parts) or "<p>No ads kept yet.</p>"}
+<details><summary>Searches ({len(runs_log)})</summary><table><tr><th>Date</th><th>Brand</th><th>How</th><th>Loaded</th><th>Kept</th><th>Left out, under {MIN_DAYS} days</th><th>Note</th></tr>{runs}</table></details>
 <details><summary>Type changes ({len(types_log)})</summary><table><tr><th>Date</th><th>Action</th><th>From</th><th>To</th><th>Reason</th></tr>{tlog}</table></details>
 </main><div id="lb"><img alt=""></div>
 <script>
@@ -436,6 +570,12 @@ def main():
             sys.exit("usage: build.py import <export file> <Brand> <own advertiser names, comma-separated> <YYYY-MM-DD>")
         print(json.dumps(import_export(*sys.argv[2:6]), ensure_ascii=False, indent=1))
         return
+    if len(sys.argv) == 4 and sys.argv[1] == "geo-ids":
+        return geo_ids(sys.argv[2].rstrip("/"), sys.argv[3])
+    if len(sys.argv) >= 2 and sys.argv[1] == "geo":
+        if len(sys.argv) != 5:
+            sys.exit("usage: build.py geo <out_dir> <results file> <YYYY-MM-DD>")
+        return geo(sys.argv[2].rstrip("/"), sys.argv[3], sys.argv[4])
     if len(sys.argv) >= 2 and sys.argv[1] == "trim":
         if len(sys.argv) != 4:
             sys.exit("usage: build.py trim <capture.png> <out_dir>/images/<library_id>.png")
@@ -447,7 +587,7 @@ def main():
     os.makedirs(os.path.join(out, "images"), exist_ok=True)
     tsv, tl, rl = (os.path.join(out, f) for f in (f"{name}.tsv", "types-log.tsv", "runs-log.tsv"))
     TL = ["date", "action", "from", "to", "reason"]
-    RL = ["date", "brand", "how", "found", "kept", "note"]
+    RL = ["date", "brand", "how", "found", "kept", "under_30", "note"]
     rows, types_log, runs_log = read_tsv(tsv, COLS), read_tsv(tl, TL), read_tsv(rl, RL)
     today = date.today()
     for rp in sys.argv[2:]:
@@ -455,6 +595,8 @@ def main():
             run = json.load(f)
         today, a, u, s = merge(out, run, rows, types_log, runs_log)
         print(f"{rp}: {a} added, {u} updated, {s} skipped (under {MIN_DAYS} days)")
+    for r in rows:
+        r["_ft"] = first_tile_hash(os.path.join(out, r["image"])) if r.get("image") else ""
     rescore(rows, today)
     rows.sort(key=lambda r: (r.get("type", ""), -int(r["score"])))
     write_tsv(tsv, rows, COLS)

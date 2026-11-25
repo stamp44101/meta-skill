@@ -1,10 +1,10 @@
 ---
 name: meta-skill
 description: Collect competitors' working Meta ads (Facebook + Instagram) from the Ad Library into one living swipe file per brand (meta-<brand>), scored by how long they ran and how many ads share the creative, grouped by type. Use for Meta ad research, competitor ads, ad swipe files, or "Meta SKILL".
-version: 0.2
+version: 0.3
 ---
 
-# Meta SKILL — v0.2
+# Meta SKILL — v0.3
 
 Collects competitors' ads that kept running on Facebook and Instagram, as references for our Social Ads GTM. Every run adds to one living file and never replaces it.
 
@@ -32,7 +32,7 @@ https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=ALL&
 
 Search the domain or handle (`bupbes`, `mael.vn`, `cherieattire`, `malimarea`); use `search_type=keyword_exact_phrase&q="<two words>"` for names that are common words (`"fanci club"`). The page-only view (`view_all_page_id`) shows nothing for brands with no live ads.
 
-Install `scripts/adlib.js` once per tab: `window.name = String.raw` + the file in backticks + `; eval(window.name)`. `window.name` survives navigation in the tab, so after every navigation run `eval(window.name)` again.
+Paste `scripts/adlib.js` into the tab with `javascript_tool` after every navigation (the Ad Library's CSP blocks `eval`, so it can't be stored and re-run).
 
 - `MA.autoscroll()` starts loading in the background and returns at once. Wait (10 s waits in `browser_batch`), then `MA.status()` until `done` is true. Never scroll inside one long call: past ~100 cards the tab freezes and the call times out. Big brands stall before the library's total (Bupbes: 456 of ~830); say so in the run log.
 - `MA.export(30, '<today>')` puts every loaded ad that ran 30+ days on the page as text and hides the rest; `get_page_text` then saves it to a file (it is padded past 50 KB on purpose; tool results are cut off past ~1,500 characters). `MA.clearOut()` restores the page.
@@ -42,7 +42,17 @@ Install `scripts/adlib.js` once per tab: `window.name = String.raw` + the file i
 
 - **Only ads that ran 30+ days** (end date, or today if still active). Newer ads are not saved at all; a later run catches them. `export` already applies this.
 - **Whose ad:** the brand's own page is `own`. Another advertiser naming the brand (rental shop, stockist, consignment, gift shop, creator) is `other` and kept the same way. Delete draft rows that only match the word (keyword search returns baby food for "mael").
-- EU reach: for a kept ad with `EU transparency`, `await MA.versions(id)` then `await MA.eu(versionId)`, then `MA.closeDialogs()`. Record countries only when the library shows them.
+- EU reach: for a kept ad with `EU transparency`, `await MA.versions(id)` then `await MA.eu(versionId)`, then `MA.closeDialogs()`.
+
+### 2b. Where it ran
+
+The library shows no country on ads outside the EU, but its country filter lists only ads that reached that country. So for each brand, run the same search once per market with `country=XX` and see which kept ads come back. Snippets are in `scripts/geo.js`:
+
+1. `python3 -I scripts/build.py geo-ids meta-<brand> "<Brand>"` prints a SET line: paste it once per tab.
+2. Per market: navigate (`&country=XX`, same `q` and `search_type` as step 1), paste SCROLL, wait, paste CHECK, and append the line it returns to a results file. Run SCROLL + CHECK again on long pages until `n` stops growing; passes add up.
+3. `python3 -I scripts/build.py geo meta-<brand> <results file> <today>` (keep the file as `runs/<date>-geo.txt`) fills `countries` and logs every check in `geo-log.tsv`.
+
+Markets: the list in `build.py` (`MARKETS`, 20: SHER's region, the big English-language markets, the Gulf, FR and DE); add the user's markets if they name others. Several tabs can run in parallel (one `browser_batch` per tab). A kept ad not seen in any market may still have run elsewhere: write "not seen in the N markets checked", never "did not run".
 
 ### 3. Snapshot grid per kept ad
 
@@ -78,6 +88,8 @@ python3 -I scripts/build.py meta-<brand> meta-<brand>/runs/<file>.json
 | `images/<id>.png` | Snapshot grid per ad |
 | `types-log.tsv` | Every type change, with the reason |
 | `runs-log.tsv` | Every brand search: date, how, found, kept, note (brands with no ads get a row too) |
+| `geo-log.tsv` | Every per-country check: brand, country, results, cards loaded, kept ads seen |
+| `geo-ids.json` | The ID order the last SET line used (CHECK returns indexes into it) |
 | `group-notes.tsv` | Per type: what it is and what SHER should test |
 | `runs/*.json` | Each run's raw input |
 | `meta-<brand>.html` | Rebuilt every run; opens on its own |
