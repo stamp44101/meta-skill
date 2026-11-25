@@ -253,7 +253,7 @@ def thumb(path, h=360):
 
 
 def esc(s):
-    return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;"))
+    return (str(s).replace("\ufffd", " ").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;"))
 
 
 def life(r):
@@ -371,7 +371,7 @@ def markets_table(out, rows, brands):
         unseen = sum(1 for r in mine if not r.get("countries"))
         body.append(f'<tr><th>{esc(b)} <small>({len(mine)})</small></th>{"".join(cells)}<td>{unseen}</td><td>{len(checked[b])}</td></tr>')
     return (f'<h2>Where the kept ads ran <small>kept ads seen in each country with the Ad Library country filter</small></h2>'
-            f'<table class="mx"><tr><th>brand (kept)</th>{"".join(f"<th>{c}</th>" for c in cols)}<th>not seen</th><th>countries checked</th></tr>{"".join(body)}</table>'
+            f'<div class="scroll"><table class="mx"><tr><th>brand (kept)</th>{"".join(f"<th>{c}</th>" for c in cols)}<th>not seen</th><th>countries checked</th></tr>{"".join(body)}</table></div>'
             f'<p class="stats">One ad can run in several countries, so a row adds up to more than its kept ads. '
             f'{"".join(f"{esc(b)} also checked {', '.join(cs)}: none seen. " for b, cs in sorted(extra_zero.items()) if cs)}'
             f'"Not seen" means the country filter did not show it in any country checked: it may have run elsewhere, '
@@ -391,8 +391,8 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
             cells.append(f'<td>{len(mine)} <small>· {max(mine)}</small></td>' if mine else '<td class="nil">–</td>')
         mrows.append(f'<tr><th>{esc(t)}</th>{"".join(cells)}</tr>')
     totals = "".join(f'<td><b>{sum(r["brand"] == b for r in rows)}</b></td>' for b in brands)
-    matrix = (f'<table class="mx"><tr><th>type \\ brand: ads · best score</th>{"".join(f"<th>{esc(b)}</th>" for b in brands)}</tr>'
-              f'{"".join(mrows)}<tr><th>all</th>{totals}</tr></table>')
+    matrix = (f'<div class="scroll"><table class="mx"><tr><th>type \\ brand: ads · best score</th>{"".join(f"<th>{esc(b)}</th>" for b in brands)}</tr>'
+              f'{"".join(mrows)}<tr><th>all</th>{totals}</tr></table></div>')
     parts = []
     for gi, (gscore, t, gbrands, ads) in enumerate(ranked, 1):
         cards = []
@@ -445,7 +445,7 @@ nav{{position:sticky;top:0;background:var(--bg);padding:10px 24px;border-bottom:
 nav button{{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:99px;padding:4px 12px;cursor:pointer}}nav button.on{{background:var(--fg);color:var(--bg)}}
 main{{max-width:1400px;margin:auto;padding:0 24px 40px}}h2{{font-size:18px;margin:28px 0 10px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}}
 h2 small{{font-weight:400;color:var(--mute);font-size:13px}}.rank{{color:var(--acc);font-weight:700}}
-.grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px}}
+.grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(420px,100%),1fr));gap:14px}}.scroll{{overflow-x:auto;-webkit-overflow-scrolling:touch}}*{{min-width:0}}body{{overflow-x:clip}}
 article{{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}}
 .snap{{background:#111;overflow-x:auto}}.snap img{{display:block;height:220px;width:auto;cursor:zoom-in}}.noimg{{color:#888;padding:40px;text-align:center}}
 .info{{padding:10px 12px}}.top{{display:flex;gap:8px;align-items:center}}.score{{margin-left:auto;font-weight:700}}
@@ -456,6 +456,8 @@ details{{margin-top:30px}}table{{border-collapse:collapse;width:100%;font-size:1
 .flag{{font-size:12px;color:var(--acc);margin:2px 0}}article.more{{display:none}}section.open article.more{{display:block}}
 .showmore{{margin:10px 0;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:6px;padding:5px 12px;cursor:pointer}}
 .mx{{width:auto;margin:14px 0 4px}}.mx td,.mx th{{padding:4px 10px}}.mx td{{text-align:center}}.mx td small{{color:var(--mute)}}.mx .nil{{color:var(--line)}}
+:root[data-theme=dark]{{--bg:#151413;--fg:#eee9e3;--mute:#9c958e;--line:#2c2926;--card:#1e1c1a;--acc:#e48a99}}:root[data-theme=light]{{--bg:#faf9f7;--fg:#1d1b19;--mute:#77716b;--line:#e6e1da;--card:#fff;--acc:#8a2b3a}}
+@media(max-width:600px){{header{{padding:18px 14px 6px}}header p{{font-size:13px}}main{{padding:0 14px 32px}}nav{{padding:8px 14px;flex-wrap:nowrap;overflow-x:auto}}nav button{{flex:none;min-height:36px}}.snap img{{height:170px}}.mx{{font-size:12.5px}}.mx td,.mx th{{padding:4px 6px;white-space:nowrap}}h2{{font-size:16px}}.showmore{{min-height:44px;width:100%}}}}
 #lb{{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:9}}#lb img{{max-width:96vw;max-height:94vh}}
 </style></head><body>
 <header><h1>{esc(name)} — competitor Meta ads that kept running</h1>
@@ -463,8 +465,8 @@ details{{margin-top:30px}}table{{border-collapse:collapse;width:100%;font-size:1
 Groups ranked by the best ad of each of their top {TOP_N} brands + {PER_BRAND} per extra brand, so one big brand can't carry a type. Each brand shows its best {SHOW_PER_BRAND} per group. Running long means the brand kept paying, not proof it sold. Short promo ads rarely reach {MIN_DAYS} days, so offers are under-represented here{cut_line}. Rebuilt {today.isoformat()} · {len(rows)} ads · {len(ranked)} types.</p></header>
 <nav><button class="on" data-b="">All brands</button>{chips}</nav>
 <main>{matrix}{markets_table(out, rows, brands)}{"".join(parts) or "<p>No ads kept yet.</p>"}
-<details><summary>Searches ({len(runs_log)})</summary><table><tr><th>Date</th><th>Brand</th><th>How</th><th>Loaded</th><th>Kept</th><th>Left out, under {MIN_DAYS} days</th><th>Note</th></tr>{runs}</table></details>
-<details><summary>Type changes ({len(types_log)})</summary><table><tr><th>Date</th><th>Action</th><th>From</th><th>To</th><th>Reason</th></tr>{tlog}</table></details>
+<details><summary>Searches ({len(runs_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Brand</th><th>How</th><th>Loaded</th><th>Kept</th><th>Left out, under {MIN_DAYS} days</th><th>Note</th></tr>{runs}</table></div></details>
+<details><summary>Type changes ({len(types_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Action</th><th>From</th><th>To</th><th>Reason</th></tr>{tlog}</table></div></details>
 </main><div id="lb"><img alt=""></div>
 <script>
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
