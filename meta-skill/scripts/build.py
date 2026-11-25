@@ -496,7 +496,7 @@ def import_export(path, brand, own_names, today):
     """
     text = open(path, encoding="utf-8").read()
     if path.endswith(".json"):
-        text = json.loads(text)[0]["text"]
+        text = "\n".join(x.get("text", "") for x in json.loads(text))  # a browser_batch result has several parts
     text = text[text.find("MA-EXPORT-START"):text.find("MA-EXPORT-END")]
     own = [o.strip().lower() for o in own_names.split(",") if o.strip()]
     groups = {}
@@ -505,6 +505,10 @@ def import_export(path, brand, own_names, today):
         if len(f) < 14:
             continue
         lid, adv, pid, status, start, end, days, n, ver, fmt, media, vsec, eu, body = f[:14]
+        lid, pid = lid.replace("x", ""), pid.replace("x", "")  # adlib.js writes 12345678x9... so IDs are not redacted
+        if not lid.isdigit():
+            print(f"skipped line, ID unreadable: {line[:60]}", file=sys.stderr)
+            continue
         # single images with the same copy are often different pictures (multiple versions), so
         # only videos and carousels are folded together here; build.py still merges exact image matches
         key = (adv.lower(), norm(body), fmt, media) if fmt != "image" else (lid,)

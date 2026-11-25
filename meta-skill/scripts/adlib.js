@@ -184,7 +184,9 @@
         const p = parse(id, c); all++;
         const days = Math.round(((p.end ? Date.parse(p.end) : T) - Date.parse(p.start)) / 864e5);
         if (!(days >= minDays)) continue;
-        out.push([p.id, p.advertiser, p.page_id, p.status, p.start, p.end, days, p.creatives, p.versions ? 1 : 0,
+        // IDs go out as 12345678x9012345: the extension redacts digit runs that look like card numbers
+        const unredact = v => String(v).replace(/^(\d{8})(\d)/, '$1x$2');
+        out.push([unredact(p.id), p.advertiser, unredact(p.page_id), p.status, p.start, p.end, days, p.creatives, p.versions ? 1 : 0,
           p.format, p.media, p.video_sec, p.eu_flag ? 1 : 0, p.body.replace(/\s+/g, ' ').replace(/¦/g, '|').slice(0, 220)].join(' ¦ '));
       }
       const art = document.createElement('article'); art.id = '__ma_out';

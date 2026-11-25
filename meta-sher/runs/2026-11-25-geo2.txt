@@ -1,0 +1,100 @@
+#IAM COCO|VN t=41 n=39 done=true hit=1.2.3.4.5.6.7.8.9.11.12.13.14.15.16.17.18.19.20.21.22.23.24.25.26.27.28.29.30.31.32.33
+#IAM COCO|US t=0 n=0 done=true hit=
+#IAM COCO|AU t=40 n=39 done=true hit=0.1.2.3.4.5.6.7.8.9.11.12.13.15.16.17.18.19.20.21.22.23.24.25.26.27.28.29.30.31.32.33
+#IAM COCO|TH t=40 n=39 done=true hit=0.1.2.3.4.5.6.7.8.9.11.12.13.15.16.17.18.19.20.21.22.23.24.25.26.27.28.29.30.31.32.33
+#JC de JC|VN t=100 n=79 done=true hit=0.1.2.3.4.5.6.7.8.9.10.11.17.19.20.21.23.24.25.26.27.28.29.30.31.32.33.34.36.37.38.39.40
+#JC de JC|TH t=15 n=8 done=true hit=12.13.14.18.41
+#JC de JC|US t=1 n=1 done=true hit=
+#JUBIN STUDIO|VN t=28 n=27 done=true hit=0.1.2.3.4.5.6.8.9.10.11.12.13
+#JUBIN STUDIO|TH t=41 n=27 done=true hit=
+#JUBIN STUDIO|US t=4 n=4 done=true hit=7
+#JUBIN STUDIO|AU t=4 n=4 done=true hit=7
+#IAM COCO|SG t=1 n=1 done=true hit=0
+#IAM COCO|MY t=40 n=39 done=true hit=0.1.2.3.4.5.6.7.8.9.11.12.13.15.16.17.18.19.20.21.22.23.24.25.26.27.28.29.30.31.32.33
+#IAM COCO|ID t=1 n=1 done=true hit=0
+#IAM COCO|PH t=40 n=39 done=true hit=0.1.2.3.4.5.6.7.8.9.11.12.13.15.16.17.18.19.20.21.22.23.24.25.26.27.28.29.30.31.32.33
+#JC de JC|SG t=18 n=14 done=true hit=22.35
+#JC de JC|MY t=0 n=0 done=true hit=
+#JC de JC|ID t=0 n=0 done=true hit=
+#JC de JC|PH t=0 n=0 done=true hit=
+#JUBIN STUDIO|SG t=4 n=4 done=true hit=7
+#JUBIN STUDIO|MY t=1 n=1 done=true hit=
+#JUBIN STUDIO|ID t=0 n=0 done=true hit=
+#JUBIN STUDIO|PH t=0 n=0 done=true hit=
+#IAM COCO|HK t=33 n=31 done=true hit=1.2.3.5.6.11.12.13.15.16.17.20.21.22.24.25.26.27.28.29.30.31.32.33
+#IAM COCO|TW t=26 n=24 done=true hit=1.11.12.13.20.21.22.24.25.26.27.28.29.30.31.32.33
+#IAM COCO|KR t=0 n=0 done=true hit=
+#IAM COCO|JP t=0 n=0 done=true hit=
+#JC de JC|HK t=0 n=0 done=true hit=
+#JC de JC|TW t=0 n=0 done=true hit=
+#JC de JC|KR t=0 n=0 done=true hit=
+#JC de JC|JP t=0 n=0 done=true hit=
+#JUBIN STUDIO|HK t=4 n=4 done=true hit=7
+#JUBIN STUDIO|TW t=0 n=0 done=true hit=
+#JUBIN STUDIO|KR t=0 n=0 done=true hit=
+#JUBIN STUDIO|JP t=0 n=0 done=true hit=
+#IAM COCO|NZ t=0 n=0 done=true hit=
+#IAM COCO|CA t=1 n=1 done=true hit=0
+#IAM COCO|GB t=1 n=1 done=true hit=
+#IAM COCO|IN t=0 n=0 done=true hit=
+#JC de JC|AU t=0 n=0 done=true hit=
+#JC de JC|NZ t=0 n=0 done=true hit=
+#JC de JC|CA t=0 n=0 done=true hit=
+#JC de JC|GB t=1 n=1 done=true hit=
+#JUBIN STUDIO|NZ t=0 n=0 done=true hit=
+#JUBIN STUDIO|CA t=0 n=0 done=true hit=
+#JUBIN STUDIO|GB t=4 n=4 done=true hit=7
+#JUBIN STUDIO|IN t=0 n=0 done=true hit=
+#IAM COCO|AE t=0 n=0 done=true hit=
+#IAM COCO|KH t=0 n=0 done=true hit=
+#IAM COCO|FR t=1 n=1 done=true hit=
+#IAM COCO|DE t=0 n=0 done=true hit=
+#JC de JC|IN t=0 n=0 done=true hit=
+#JC de JC|AE t=0 n=0 done=true hit=
+#JC de JC|KH t=0 n=0 done=true hit=
+#JC de JC|FR t=3 n=3 done=true hit=
+#JC de JC|DE t=2 n=1 done=true hit=
+#JUBIN STUDIO|AE t=0 n=0 done=true hit=
+#JUBIN STUDIO|KH t=0 n=0 done=true hit=
+#JUBIN STUDIO|FR t=0 n=0 done=true hit=
+#JUBIN STUDIO|DE t=0 n=0 done=true hit=
+#RUE de RUE|TH t=0 n=0 done=true hit=
+#RUE de RUE|VN t=11 n=11 done=true hit=0.2.4.5.6
+#RUE de RUE|SG t=0 n=0 done=true hit=
+#RUE de RUE|MY t=0 n=0 done=true hit=
+#Viery|TH t=5 n=5 done=true hit=
+#Viery|VN t=13 n=13 done=true hit=0.1.2
+#Viery|SG t=3 n=3 done=true hit=
+#Viery|MY t=10 n=10 done=true hit=
+#RUE de RUE|ID t=0 n=0 done=true hit=
+#RUE de RUE|PH t=0 n=0 done=true hit=
+#RUE de RUE|HK t=0 n=0 done=true hit=
+#RUE de RUE|TW t=0 n=0 done=true hit=
+#RUE de RUE|KR t=3 n=3 done=true hit=
+#RUE de RUE|JP t=0 n=0 done=true hit=
+#RUE de RUE|AU t=6 n=6 done=true hit=
+#RUE de RUE|NZ t=1 n=1 done=true hit=
+#RUE de RUE|US t=8 n=8 done=true hit=
+#Viery|ID t=7 n=5 done=true hit=
+#Viery|PH t=8 n=8 done=true hit=
+#Viery|HK t=9 n=9 done=true hit=
+#Viery|TW t=1 n=1 done=true hit=
+#RUE de RUE|CA t=3 n=3 done=true hit=
+#RUE de RUE|GB t=5 n=5 done=true hit=
+#RUE de RUE|IN t=0 n=0 done=true hit=
+#RUE de RUE|AE t=3 n=3 done=true hit=
+#Viery|US t=150 n=118 done=true hit=
+#Viery|CA t=130 n=93 done=true hit=
+#Viery|KR t=15 n=6 done=true hit=
+#Viery|JP t=13 n=8 done=true hit=
+#Viery|AU t=110 n=79 done=true hit=
+#Viery|NZ t=36 n=25 done=true hit=
+#RUE de RUE|KH t=0 n=0 done=true hit=
+#RUE de RUE|FR t=110 n=94 done=false hit=
+#Viery|GB t=230 n=201 done=false hit=
+#RUE de RUE|DE t=3 n=3 done=true hit=
+#Viery|IN t=8 n=8 done=true hit=
+#Viery|AE t=46 n=33 done=true hit=
+#Viery|KH t=3 n=3 done=true hit=
+#Viery|FR t=140 n=121 done=true hit=
+#Viery|DE t=190 n=169 done=false hit=

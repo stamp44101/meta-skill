@@ -1,0 +1,76 @@
+{
+ "date": "2026-11-25",
+ "searches": [
+  {
+   "brand": "Viery",
+   "kept": 3,
+   "how": "keyword \"viery\", country VN, all statuses, FB+IG",
+   "found": 13,
+   "under_30": 9,
+   "note": "The Viery page runs no ads. All countries returns ~4,200, mostly Slovak \"viery\" (faith), so the search was narrowed to VN. 3 Shopee affiliate list posts naming Viery kept as other; a 4th (Lép) is filed under RUE de RUE."
+  }
+ ],
+ "types_log": [],
+ "ads": [
+  {
+   "id": "1133851412518692",
+   "brand": "Viery",
+   "advertiser": "Nàng xinh có gu",
+   "page_id": "100090956036782",
+   "owner": "other",
+   "type": "someone else's ad naming the brand",
+   "status": "active",
+   "start": "2026-10-20",
+   "end": "",
+   "creatives": 1,
+   "versions": false,
+   "format": "image",
+   "media": 1,
+   "video_sec": "",
+   "eu_flag": false,
+   "body": "Chiếc áo trắng dáng lửng với phần cổ ren tinh xảo, tay dài loe nhẹ kết hợp quần cạp thấp, tạo hiệu ứng eo thon và đôi chân dài cực kỳ hút mắt. 📍Link áo: https://s.shopee.vn/5LCpDYOtaa 📍Link quần: https://s.shopee.vn/7V",
+   "image": "images/1133851412518692.png",
+   "note": ""
+  },
+  {
+   "id": "1988392548501665",
+   "brand": "Viery",
+   "advertiser": "Tủ đồ thanh lịch",
+   "page_id": "61585633596712",
+   "owner": "other",
+   "type": "someone else's ad naming the brand",
+   "status": "active",
+   "start": "2026-10-20",
+   "end": "",
+   "creatives": 1,
+   "versions": false,
+   "format": "image",
+   "media": 1,
+   "video_sec": "",
+   "eu_flag": false,
+   "body": "List 8 brand gu slay, quyến rũ cho nàng 💋 💕Link váy: https://s.shopee.vn/6AkY0WqT3q 🌷Viery: https://s.shopee.vn/6VNOP9XoYW Trùm đồ quyến rũ, tôn dáng là đây chứ đâu! Mấy mẫu áo yếm, đầm hở lưng ở đây đỉnh chóp, chất c",
+   "image": "images/1988392548501665.png",
+   "note": ""
+  },
+  {
+   "id": "1098569356367569",
+   "brand": "Viery",
+   "advertiser": "Velorine Closet",
+   "page_id": "61595531851810",
+   "owner": "other",
+   "type": "someone else's ad naming the brand",
+   "status": "active",
+   "start": "2026-10-23",
+   "end": "",
+   "creatives": 1,
+   "versions": false,
+   "format": "image",
+   "media": 1,
+   "video_sec": "",
+   "eu_flag": false,
+   "body": "📍Link áo: https://s.shopee.vn/7AeWcsLaxo List shop này dành cho hội thích phong cách retro Y2K, từ áo len cổ bẻ đến quần short wash bụi và phụ kiện dây xích. 🔥WEIRD PUSS https://s.shopee.vn/9Kj1Crdg0J WEIRD PUSS đi vib",
+   "image": "images/1098569356367569.png",
+   "note": ""
+  }
+ ]
+}
