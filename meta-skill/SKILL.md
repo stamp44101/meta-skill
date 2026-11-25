@@ -78,11 +78,14 @@ python3 -I scripts/build.py meta-<brand> meta-<brand>/runs/<file>.json
 | `images/<id>.png` | Snapshot grid per ad |
 | `types-log.tsv` | Every type change, with the reason |
 | `runs-log.tsv` | Every brand search: date, how, found, kept, note (brands with no ads get a row too) |
+| `group-notes.tsv` | Per type: what it is and what SHER should test |
 | `runs/*.json` | Each run's raw input |
 | `meta-<brand>.html` | Rebuilt every run; opens on its own |
 
-**Score** = days (up to 180) + 15 per extra ad using the creative (up to 10) + 10 for "multiple versions" + EU reach bonus (10 at 10k, 20 at 100k). An active ad counts days up to the day it was last seen live.
-**Group rank** = average of its best 3 scores + 20 per extra brand running that type.
+**Score** = days (up to 180) + 5 per extra ad using the creative (up to 10) + 10 for "multiple versions" + EU reach bonus (10 at 10k, 20 at 100k). An active ad counts days up to the day it was last seen live.
+**Group rank** = average of the best ad of each of its top 3 brands + 20 per extra brand running that type. Each brand shows its best 4 ads per group.
+
+After a run that adds or changes types, update `group-notes.tsv` (type, takeaway, sher_test, updated): what the type is in facts from the page, and one thing SHER should test. Keep both to two sentences.
 
 Send the HTML with one line per brand (found → kept), and any types merged or split.
 

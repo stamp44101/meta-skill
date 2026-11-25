@@ -34,9 +34,11 @@ COLS = ["library_id", "brand", "advertiser", "page_id", "owner", "type", "status
         "score", "body", "cta", "image", "creative_hash", "first_seen", "last_seen", "note"]
 MIN_DAYS = 30        # decision 2: newer ads are never saved
 DAY_CAP = 180        # days count up to this
-PER_CREATIVE = 15    # points for every extra ad using the same creative
+PER_CREATIVE = 5     # points for every extra ad using the same creative (kept small: copies are cheap)
 CREATIVE_CAP = 10    # ...counted up to 10 extra ads
-TOP_N = 3            # a group is scored on its best N ads
+TOP_N = 3            # a group is scored on the best ad of each of its top N brands
+SHOW_PER_BRAND = 4   # a group shows each brand's best 4 ads; the rest sit behind "show more"
+FLIGHT_MIN = 5       # this many ads from one brand ending the same day = a campaign end, flagged
 PER_BRAND = 20       # points for every extra brand running the type
 
 
@@ -167,9 +169,16 @@ def merge(out, run, rows, types_log, runs_log):
 
 
 def rescore(rows, today):
+    from collections import Counter
+    ends = Counter((r["brand"], r["end"]) for r in rows if r.get("status") == "ended" and r.get("end"))
+    copies = Counter((r["brand"], norm(r.get("body", ""))) for r in rows)
     for r in rows:
         r["days"] = days_of(r, today)
         r["score"] = score(r)
+        n = ends.get((r["brand"], r.get("end")), 0) if r.get("status") == "ended" else 0
+        r["_flight"] = f"ended with {n - 1} other {r['brand']} ads the same day (campaign end, not a verdict on this ad)" if n >= FLIGHT_MIN else ""
+        c = copies[(r["brand"], norm(r.get("body", "")))]
+        r["_copies"] = f"same copy as {c - 1} other ad{'s' if c > 2 else ''} here, different picture" if c > 1 and norm(r.get("body", "")) else ""
 
 
 def rank(rows):
@@ -179,8 +188,11 @@ def rank(rows):
     ranked = []
     for t, ads in groups.items():
         ads.sort(key=lambda r: -int(r["score"]))
-        top = [int(r["score"]) for r in ads[:TOP_N]]
-        brands = sorted({r["brand"] for r in ads})
+        best = {}
+        for r in ads:  # each brand's best ad, so one big brand can't carry a type alone
+            best.setdefault(r["brand"], int(r["score"]))
+        top = sorted(best.values(), reverse=True)[:TOP_N]
+        brands = sorted(best)
         gscore = round(sum(top) / len(top) + PER_BRAND * (len(brands) - 1))
         ranked.append((gscore, t, brands, ads))
     ranked.sort(key=lambda g: -g[0])
@@ -209,13 +221,48 @@ def life(r):
     return f"at least {d} days, still running" if r.get("status") == "active" else f"ran {d} days, ended {r.get('end')}"
 
 
-def html(out, name, rows, types_log, runs_log, today):
+def median(xs):
+    xs = sorted(xs)
+    return xs[len(xs) // 2] if xs else ""
+
+
+def group_stats(ads):
+    from collections import Counter
+    n = len(ads)
+    fm = Counter(("video" if "video" in r["format"] else r["format"]) for r in ads)
+    vids = [int(float(r["video_sec"])) for r in ads if str(r.get("video_sec", "")).strip() not in ("", "0")]
+    parts = [", ".join(f"{k} {round(100 * v / n)}%" for k, v in fm.most_common())]
+    if vids:
+        parts.append(f"videos ~{median(vids)}s")
+    parts.append(f"median run {median([int(r['days']) for r in ads])} days")
+    live = sum(r.get("status") == "active" for r in ads)
+    if live:
+        parts.append(f"{live} still running")
+    return " · ".join(parts)
+
+
+def html(out, name, rows, types_log, runs_log, today, notes=None):
+    notes = notes or {}
     ranked = rank(rows)
     brands = sorted({r["brand"] for r in rows})
+    # brand x type matrix: count / best score
+    mrows = []
+    for gscore, t, gbrands, ads in ranked:
+        cells = []
+        for b in brands:
+            mine = [int(r["score"]) for r in ads if r["brand"] == b]
+            cells.append(f'<td>{len(mine)} <small>· {max(mine)}</small></td>' if mine else '<td class="nil">–</td>')
+        mrows.append(f'<tr><th>{esc(t)}</th>{"".join(cells)}</tr>')
+    totals = "".join(f'<td><b>{sum(r["brand"] == b for r in rows)}</b></td>' for b in brands)
+    matrix = (f'<table class="mx"><tr><th>type \\ brand: ads · best score</th>{"".join(f"<th>{esc(b)}</th>" for b in brands)}</tr>'
+              f'{"".join(mrows)}<tr><th>all</th>{totals}</tr></table>')
     parts = []
     for gi, (gscore, t, gbrands, ads) in enumerate(ranked, 1):
         cards = []
+        seen = {}
         for i, r in enumerate(ads, 1):
+            seen[r["brand"]] = seen.get(r["brand"], 0) + 1
+            extra = seen[r["brand"]] > SHOW_PER_BRAND
             src = thumb(os.path.join(out, r["image"])) if r.get("image") else ""
             img = f'<img src="{src}" alt="">' if src else '<div class="noimg">no snapshot</div>'
             meta = [life(r), f'{r["creatives"]} ads use this creative' if int(r.get("creatives") or 1) > 1 else "",
@@ -223,18 +270,26 @@ def html(out, name, rows, types_log, runs_log, today):
                     r.get("format", "") + (f' · {r["video_sec"]}s' if r.get("video_sec") else ""),
                     f'EU reach {int(float(r["eu_reach"])):,}' if r.get("eu_reach") else "",
                     r.get("countries", "")]
+            flags = [f for f in (r.get("_flight"), r.get("_copies")) if f]
             cards.append(
-                f'<article data-brand="{esc(r["brand"])}"><div class="snap">{img}</div><div class="info">'
+                f'<article data-brand="{esc(r["brand"])}"{" class=more" if extra else ""}><div class="snap">{img}</div><div class="info">'
                 f'<div class="top"><span class="rank">#{i}</span><b>{esc(r["brand"])}</b>'
                 f'<span class="tag {esc(r.get("owner", ""))}">{"own ad" if r.get("owner") == "own" else "by " + esc(r.get("advertiser", ""))}</span>'
                 f'<span class="score">{r["score"]}</span></div>'
                 f'<div class="meta">{" · ".join(esc(m) for m in meta if m)}</div>'
+                f'{"".join(f"<div class=flag>{esc(x)}</div>" for x in flags)}'
                 f'<p>{esc(r.get("body", ""))}</p>'
                 f'<a href="https://www.facebook.com/ads/library/?id={esc(r["library_id"])}" target="_blank" rel="noopener">Library ID {esc(r["library_id"])}</a>'
                 f'{" · " + esc(r["note"]) if r.get("note") else ""}</div></article>')
+        hidden = sum(1 for c in cards if " class=more" in c)
+        nt = notes.get(t, {})
+        note = (f'<div class="note"><p><b>What it is:</b> {esc(nt.get("takeaway", ""))}</p>'
+                f'<p><b>SHER test:</b> {esc(nt.get("sher_test", ""))}</p></div>') if nt else ""
+        more = f'<button class="showmore">show {hidden} more (each brand capped at {SHOW_PER_BRAND})</button>' if hidden else ""
         parts.append(f'<section><h2><span class="rank">{gi}</span>{esc(t)}<small>group score {gscore} · '
                      f'{len(ads)} ads · {len(gbrands)} brand{"s" if len(gbrands) > 1 else ""}: {esc(", ".join(gbrands))}</small></h2>'
-                     f'<div class="grid">{"".join(cards)}</div></section>')
+                     f'<div class="stats">{esc(group_stats(ads))}</div>{note}'
+                     f'<div class="grid">{"".join(cards)}</div>{more}</section>')
     runs = "".join(f'<tr><td>{esc(s.get("date"))}</td><td>{esc(s.get("brand"))}</td><td>{esc(s.get("how"))}</td>'
                    f'<td>{esc(s.get("found"))}</td><td>{esc(s.get("kept"))}</td><td>{esc(s.get("note"))}</td></tr>' for s in runs_log[::-1])
     tlog = "".join(f'<tr><td>{esc(e.get("date"))}</td><td>{esc(e.get("action"))}</td><td>{esc(e.get("from"))}</td>'
@@ -257,20 +312,25 @@ article{{background:var(--card);border:1px solid var(--line);border-radius:10px;
 .tag{{font-size:12px;color:var(--mute);border:1px solid var(--line);border-radius:4px;padding:0 6px}}.tag.other{{color:var(--acc);border-color:var(--acc)}}
 .meta{{color:var(--mute);font-size:12.5px;margin:4px 0}}article p{{margin:6px 0;font-size:13px;max-height:5.8em;overflow:hidden}}a{{color:var(--acc)}}
 details{{margin-top:30px}}table{{border-collapse:collapse;width:100%;font-size:13px}}td,th{{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top}}
+.stats{{color:var(--mute);font-size:13px;margin:-4px 0 8px}}.note{{background:var(--card);border-left:3px solid var(--acc);padding:6px 12px;margin:0 0 12px;border-radius:4px}}.note p{{margin:4px 0}}
+.flag{{font-size:12px;color:var(--acc);margin:2px 0}}article.more{{display:none}}section.open article.more{{display:block}}
+.showmore{{margin:10px 0;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:6px;padding:5px 12px;cursor:pointer}}
+.mx{{width:auto;margin:14px 0 4px}}.mx td,.mx th{{padding:4px 10px}}.mx td{{text-align:center}}.mx td small{{color:var(--mute)}}.mx .nil{{color:var(--line)}}
 #lb{{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:9}}#lb img{{max-width:96vw;max-height:94vh}}
 </style></head><body>
 <header><h1>{esc(name)} — competitor Meta ads that kept running</h1>
-<p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days (up to {DAY_CAP}) + {PER_CREATIVE} per extra ad using the creative + 10 for multiple versions + EU reach bonus.
-Groups ranked by their best {TOP_N} ads + {PER_BRAND} per extra brand. Running long means the brand kept paying, not proof it sold. Rebuilt {today.isoformat()} · {len(rows)} ads · {len(ranked)} types.</p></header>
+<p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days (up to {DAY_CAP}) + {PER_CREATIVE} per extra ad using the creative (up to {CREATIVE_CAP}) + 10 for multiple versions + EU reach bonus.
+Groups ranked by the best ad of each of their top {TOP_N} brands + {PER_BRAND} per extra brand, so one big brand can't carry a type. Each brand shows its best {SHOW_PER_BRAND} per group. Running long means the brand kept paying, not proof it sold. Rebuilt {today.isoformat()} · {len(rows)} ads · {len(ranked)} types.</p></header>
 <nav><button class="on" data-b="">All brands</button>{chips}</nav>
-<main>{"".join(parts) or "<p>No ads kept yet.</p>"}
+<main>{matrix}{"".join(parts) or "<p>No ads kept yet.</p>"}
 <details><summary>Searches ({len(runs_log)})</summary><table><tr><th>Date</th><th>Brand</th><th>How</th><th>Found</th><th>Kept</th><th>Note</th></tr>{runs}</table></details>
 <details><summary>Type changes ({len(types_log)})</summary><table><tr><th>Date</th><th>Action</th><th>From</th><th>To</th><th>Reason</th></tr>{tlog}</table></details>
 </main><div id="lb"><img alt=""></div>
 <script>
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
-document.querySelectorAll('article').forEach(a=>a.style.display=!b.dataset.b||a.dataset.brand===b.dataset.b?'':'none');
+document.querySelectorAll('article').forEach(a=>a.style.display=!b.dataset.b||a.dataset.brand===b.dataset.b?(b.dataset.b?'block':''):'none');
 document.querySelectorAll('section').forEach(s=>s.style.display=[...s.querySelectorAll('article')].some(a=>a.style.display!=='none')?'':'none')}});
+document.querySelectorAll('.showmore').forEach(b=>b.onclick=()=>{{b.closest('section').classList.add('open');b.remove()}});
 const lb=document.getElementById('lb');document.querySelectorAll('.snap img').forEach(i=>i.onclick=()=>{{lb.querySelector('img').src=i.src;lb.style.display='flex'}});
 lb.onclick=()=>lb.style.display='none';document.onkeydown=e=>{{if(e.key==='Escape')lb.style.display='none'}};
 </script></body></html>"""
@@ -400,7 +460,8 @@ def main():
     write_tsv(tsv, rows, COLS)
     write_tsv(tl, types_log, TL)
     write_tsv(rl, runs_log, RL)
-    page = html(out, name, rows, types_log, runs_log, today)
+    notes = {r["type"]: r for r in read_tsv(os.path.join(out, "group-notes.tsv"), ["type", "takeaway", "sher_test", "updated"])}
+    page = html(out, name, rows, types_log, runs_log, today, notes)
     print(f"{len(rows)} ads in {tsv}\n{page} ({os.path.getsize(page) // 1024} KB)")
 
 
