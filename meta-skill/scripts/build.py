@@ -334,17 +334,6 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
         checked.setdefault(e["brand"], set()).add(e["country"])
     ranked = rank(rows)
     brands = sorted({r["brand"] for r in rows})
-    # brand x type matrix: count / best score
-    mrows = []
-    for _, t, gbrands, ads in ranked:
-        cells = []
-        for b in brands:
-            n = sum(r["brand"] == b for r in ads)
-            cells.append(f'<td>{n}</td>' if n else '<td class="nil">–</td>')
-        mrows.append(f'<tr><th>{esc(t)}</th>{"".join(cells)}</tr>')
-    totals = "".join(f'<td><b>{sum(r["brand"] == b for r in rows)}</b></td>' for b in brands)
-    matrix = (f'<div class="scroll"><table class="mx"><tr><th>look \\ brand: ads</th>{"".join(f"<th>{esc(b)}</th>" for b in brands)}</tr>'
-              f'{"".join(mrows)}<tr><th>all</th>{totals}</tr></table></div>')
     parts = []
     for _, t, gbrands, ads in ranked:
         cards = []
@@ -354,7 +343,7 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
             img = f'<img src="{src}" alt="">' if src else '<div class="noimg">no snapshot</div>'
             meta = [life(r), f'{r["creatives"]} ads use this creative' if int(r.get("creatives") or 1) > 1 else "",
                     "multiple versions" if r.get("versions") == "yes" else "",
-                    r.get("format", "") + (f' · {r["video_sec"]}s' if r.get("video_sec") else ""),
+                    r.get("format", ""),
                     f'EU reach {int(float(r["eu_reach"])):,}' if r.get("eu_reach") else "",
                     ("seen in " + r["countries"]) if r.get("countries") else
                     (f'not seen in the {len(checked[r["brand"]])} countries checked' if r["brand"] in checked else "")]
@@ -414,7 +403,7 @@ header details{{margin:6px 0 0}}header details p{{margin:4px 0 0}}article.more{{
 <details><summary>How ads are kept and scored</summary><p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days + {PER_CREATIVE} per extra ad using the creative (counted up to {CREATIVE_CAP} ads, so at most {PER_CREATIVE * CREATIVE_CAP} points) + 10 for multiple versions + EU reach bonus (10 at 10,000 people reached in the EU, 20 at 100,000; {eu_n} of {len(rows)} ads have EU reach{f", the highest {eu_max:,}" if eu_n else ""}).
 Ads still running count days up to the day they were last seen live. Ads under {MIN_DAYS} days are left out{cut_line}.</p></details></header>
 <nav><button class="on" data-b="">All brands</button>{chips}</nav>
-<main>{matrix}{markets_table(out, rows, brands)}{"".join(parts) or "<p>No ads kept yet.</p>"}
+<main>{markets_table(out, rows, brands)}{"".join(parts) or "<p>No ads kept yet.</p>"}
 <details><summary>Searches ({len(runs_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Brand</th><th>How</th><th>Loaded</th><th>Kept</th><th>Left out, under {MIN_DAYS} days</th><th>Note</th></tr>{runs}</table></div></details>
 <details><summary>Group changes ({len(types_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Action</th><th>From</th><th>To</th><th>Reason</th></tr>{tlog}</table></div></details>
 </main><div id="lb"><img alt=""></div>

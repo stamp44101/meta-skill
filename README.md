@@ -43,16 +43,5 @@ What the skill does today and where the data stops. Every number here was checke
 
 ## Page
 
-Ads are grouped by look (how they were shot, judged from the pictures), not by caption. A brand × look count table first, then a brand × country table (kept ads seen per market), then each look with one line on what puts an ad in it (`meta-sher/group-notes.tsv`) and its ads ranked by score; the first 12 show, the rest are behind "show all". The version with a caption "angle" filter is kept on branch `legacy-v0.4-looks-angle`.
+Ads are grouped by look (how they were shot, judged from the pictures), not by caption. A brand × country table first (kept ads seen per market), then each look with one line on what puts an ad in it (`meta-sher/group-notes.tsv`) and its ads ranked by score; the first 12 show, the rest are behind "show all". The version with a caption "angle" filter is kept on branch `legacy-v0.4-looks-angle`.
 
-## Research behind it
-
-What we took from existing skills and tools (Nov 2026):
-
-- [goose-skills · ad-angle-miner](https://github.com/gooseworks-ai/goose-skills/blob/main/skills/shared/ad-angle-miner/SKILL.md): "sustained ad" = 30+ days or 3+ variants; write "at least N days, still running"; drop off-category ads.
-- [goose-skills · competitor-ad-intelligence](https://github.com/gooseworks-ai/goose-skills/blob/main/skills/shared/competitor-ad-intelligence/SKILL.md): longevity is sustained spend, not proof of results; keep the library link with every ad.
-- [Apify · bovi/meta-ads-library-scraper](https://apify.com/bovi/meta-ads-library-scraper): days from `total_active_time`, longevity capped, `collation_count` (the "N ads use this creative" number) as the scale signal.
-- [Apify · curious_coder/facebook-ads-library-scraper](https://apify.com/curious_coder/facebook-ads-library-scraper): the paid fallback if Chrome is too slow.
-- [dev.to · FB ad spy with SQLite](https://dev.to/olams/build-a-facebook-ad-spy-tool-to-reverse-engineer-winning-campaigns-4421): upsert by ID with first/last seen; its gap (stopped ads never marked) is why we search all statuses.
-- [thatrebeccarae · competitor-ads-analyst](https://github.com/thatrebeccarae/claude-marketing/tree/main/skills/competitor-ads-analyst) and [AgriciDaniel · ads-competitor](https://github.com/AgriciDaniel/claude-ads/blob/main/skills/ads-competitor/SKILL.md): date everything, keep observation apart from inference.
-- Meta's own Ad Library API (and the FB Ads connector's library search) only holds commercial ads that reached the EU or UK, so it can't be the main source for Asian brands.

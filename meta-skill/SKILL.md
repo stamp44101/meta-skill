@@ -1,6 +1,6 @@
 ---
 name: meta-skill
-description: Collect competitors' working Meta ads (Facebook + Instagram) from the Ad Library into one living swipe file per brand (meta-<brand>), scored by how long they ran and how many ads share the creative, grouped by how each ad was shot (its look). Use for Meta ad research, competitor ads, ad swipe files, or "Meta SKILL".
+description: Collect competitors' working Meta ads (Facebook + Instagram) from the Ad Library into one living swipe file per brand (meta-<brand>), scored by how long they ran, how many ads share the creative and their EU reach, grouped by how each ad was shot (its look). Use for Meta ad research, competitor ads, ad swipe files, or "Meta SKILL".
 version: 0.5
 ---
 
