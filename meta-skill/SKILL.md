@@ -75,7 +75,14 @@ python3 -I scripts/build.py trim <saved file> meta-<brand>/images/<id>.png
 - **casual, phone-shot**: looks self-filmed: mirror selfies, try-ons talking to camera, snapshots
 - **graphic layout**: text-led designs, not a shoot
 
-A carousel or video that mixes looks goes where most of its frames sit. To label many ads, stack the grids into numbered contact sheets and look at them in batches. Reuse these looks; if a new one is needed, merge or split, log it in `types_log` with the reason.
+Tie-breaks, so the same picture gets the same look every run:
+- a bare room with a chair, curtain or wallpaper and plain posing → studio
+- a concept, props, a built set or theatrical light (even indoors) → editorial; so is a wild place: forest, river, sea rocks, an open field
+- a hotel or villa room, balcony, courtyard, staircase or street with natural posing → on location, even with a sea view
+- a try-on presented to camera or a mirror selfie → casual, however nice the room
+- no person in most frames → product only
+
+A carousel or video that mixes looks goes where most of its frames sit. To label many ads, stack the grids into numbered contact sheets and look at them in batches. Reuse these looks; if a new one is needed, merge or split, log it in `types_log` with the reason (build.py keeps any `type` that is not an existing look as the angle instead). `reangle` in the run fixes a wrong angle.
 
 `angle` is what the copy sells, read from the caption: single piece spotlight, new drop or collection, styled look, mood (no product named), catalogue product cards, creator-fronted, customer quote, discount or code, someone else's ad naming the brand. It shows as a tag on each card and as a filter, not as a group.
 

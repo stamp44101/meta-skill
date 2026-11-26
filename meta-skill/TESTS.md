@@ -50,14 +50,15 @@ Same steps as Runs 2–3, merged into the same meta-sher (124 → 220 ads).
 
 ### Regroup — 26 Nov 2026, by look (v0.4)
 Stamp: the caption-based types were the wrong axis; group by how the ad was shot. All 220 grids were looked at on 34 numbered contact sheets and relabelled; the old type is kept as `angle`.
-| Look | Ads | Mostly | Median run |
+| Look | Ads | Mostly | Still running |
 |---|---|---|---|
-| studio, minimal | 106 | Bupbes (82) | 91 days |
-| casual, phone-shot | 43 | JC de JC, JUBIN STUDIO | 59 |
-| on location, polished | 32 | IAM COCO, JC de JC, Cherie | 55 |
-| editorial | 28 | IAM COCO, Maël | 37 |
-| product only, no model | 9 | Maël, JUBIN STUDIO | 92 |
-| graphic layout | 2 | other businesses | 141 |
+| studio, minimal | 109 | Bupbes (82) | 20 (18%) |
+| casual, phone-shot | 42 | JC de JC, JUBIN STUDIO | 39 (93%) |
+| editorial | 30 | IAM COCO, Maël | 26 (87%) |
+| on location, polished | 28 | IAM COCO, JC de JC, Cherie | 23 (82%) |
+| product only, no model | 9 | Maël, JUBIN STUDIO | 8 (89%) |
+| graphic layout | 2 | other businesses | 2 |
+- Second and third opinions (two reviewer agents): 5 of 220 relabelled (IAM COCO concept storefront and meadow → editorial; a Cherie white room and two Viery plain-wall shots → studio). Fixed: notes claimed studio "runs longest" from medians, but 89 of its ads have ended while 82–93% of the other looks are still running, so run length is a lower bound there; notes now lead with the still-running share. Angle menu was squeezed to 22 px on phones; empty filter results showed a blank page; median was wrong for even counts; an old run JSON could overwrite looks with caption types (now kept as angle).
 - Calls that could go either way: rooms with a chair or wallpaper and plain posing went to studio; IAM COCO's nature shoots with a concept (horse, river, mosquito net) to editorial and its plain courtyard or villa sets to polished location; try-on videos shot in JC de JC's showroom to casual even though the room is staged.
 
 ### Scout — 25 Nov 2026, the five SHER competitors

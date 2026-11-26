@@ -26,8 +26,11 @@ run.json (written by the agent during a run):
            "creatives": 2, "versions": false, "format": "video", "media": 1, "video_sec": 13,
            "eu_reach": "", "countries": "", "body": "...", "cta": "", "image": "images/<id>.png", "note": ""}],
   "types_log": [{"action": "new|merge|split|rename", "from": "a, b", "to": "c", "reason": "..."}],
-  "retype": {"<id>": "<type>"}
+  "retype": {"<id>": "<look>"},
+  "reangle": {"<id>": "<angle>"}
 }
+Runs saved before v0.4 (2026-11-26) carry caption types in `type`; merging one again keeps the looks and
+moves its types into `angle`.
 `type` is the look: how the ad was shot, judged from the snapshot (studio, editorial, casual phone...),
 never from the caption. `angle` is what the copy sells (one piece, a new drop...), shown as a tag and filter.
 Only the standard library and Pillow are used.
@@ -128,6 +131,10 @@ def score(r):
 def merge(out, run, rows, types_log, runs_log):
     today = date.fromisoformat(run.get("date") or date.today().isoformat())
     by_id = {r["library_id"]: r for r in rows}
+    # `type` is the look. A run may only use a look already in the file or one its types_log adds;
+    # anything else (e.g. a caption type from a pre-v0.4 run) is kept as the angle, never as a new group.
+    looks = {r.get("type") for r in rows if r.get("type")} | {
+        str(e.get("to", "")).strip() for e in run.get("types_log", []) if e.get("action") in ("new", "split", "rename", "regroup")}
     added = updated = skipped = 0
     for a in run.get("ads", []):
         a = dict(a)
@@ -136,6 +143,10 @@ def merge(out, run, rows, types_log, runs_log):
         a["creative_hash"] = dhash(os.path.join(out, img)) if img else ""
         a["days"] = days_of(a, today)
         a["versions"] = "yes" if a.get("versions") in (True, "true", "yes", 1, "1") else "no"
+        if looks and a.get("type") and a["type"] not in looks:
+            print(f'{a["library_id"]}: "{a["type"]}" is not a look in this file; kept as angle', file=sys.stderr)
+            a["angle"] = a.get("angle") or a["type"]
+            a["type"] = ""
         if a["days"] < MIN_DAYS:
             skipped += 1
             continue
@@ -178,6 +189,9 @@ def merge(out, run, rows, types_log, runs_log):
     for lid, t in (run.get("retype") or {}).items():
         if lid in by_id:
             by_id[lid]["type"] = t
+    for lid, t in (run.get("reangle") or {}).items():
+        if lid in by_id:
+            by_id[lid]["angle"] = t
     for e in run.get("types_log", []):
         e = {"date": today.isoformat(), **{k: str(v) for k, v in e.items()}}
         if e in types_log:  # the same run merged twice
@@ -233,7 +247,7 @@ def rank(rows):
     for t, ads in groups.items():
         ads.sort(key=lambda r: -int(r["score"]))
         best = {}
-        for r in ads:  # each brand's best ad, so one big brand can't carry a type alone
+        for r in ads:  # each brand's best ad, so one big brand can't carry a look alone
             best.setdefault(r["brand"], int(r["score"]))
         top = sorted(best.values(), reverse=True)[:TOP_N]
         brands = sorted(best)
@@ -267,7 +281,10 @@ def life(r):
 
 def median(xs):
     xs = sorted(xs)
-    return xs[len(xs) // 2] if xs else ""
+    if not xs:
+        return ""
+    m = len(xs) // 2
+    return xs[m] if len(xs) % 2 else round((xs[m - 1] + xs[m]) / 2)
 
 
 def group_stats(ads):
@@ -280,8 +297,7 @@ def group_stats(ads):
         parts.append(f"videos ~{median(vids)}s")
     parts.append(f"median run {median([int(r['days']) for r in ads])} days")
     live = sum(r.get("status") == "active" for r in ads)
-    if live:
-        parts.append(f"{live} still running")
+    parts.append(f"{live} of {n} still running ({round(100 * live / n)}%)")
     return " · ".join(parts)
 
 
@@ -462,26 +478,28 @@ article{{background:var(--card);border:1px solid var(--line);border-radius:10px;
 details{{margin-top:30px}}table{{border-collapse:collapse;width:100%;font-size:13px}}td,th{{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top}}
 .stats{{color:var(--mute);font-size:13px;margin:-4px 0 8px}}.note{{background:var(--card);border-left:3px solid var(--acc);padding:6px 12px;margin:0 0 12px;border-radius:4px}}.note p{{margin:4px 0}}
 .flag{{font-size:12px;color:var(--acc);margin:2px 0}}.angle{{display:inline-block;font-size:11.5px;color:var(--mute);background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:0 8px;margin:4px 0 0}}
-nav select{{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:99px;padding:4px 10px;font:inherit}}article.more{{display:none}}section.open article.more{{display:block}}
+nav select{{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:99px;padding:4px 10px;font:inherit;flex-shrink:0;min-width:180px}}
+header details{{margin:6px 0 0}}header details p{{margin:4px 0 0}}article.more{{display:none}}section.open article.more{{display:block}}
 .showmore{{margin:10px 0;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:6px;padding:5px 12px;cursor:pointer}}
 .mx{{width:auto;margin:14px 0 4px}}.mx td,.mx th{{padding:4px 10px}}.mx td{{text-align:center}}.mx td small{{color:var(--mute)}}.mx .nil{{color:var(--line)}}
 :root[data-theme=dark]{{--bg:#151413;--fg:#eee9e3;--mute:#9c958e;--line:#2c2926;--card:#1e1c1a;--acc:#e48a99}}:root[data-theme=light]{{--bg:#faf9f7;--fg:#1d1b19;--mute:#77716b;--line:#e6e1da;--card:#fff;--acc:#8a2b3a}}
-@media(max-width:600px){{header{{padding:18px 14px 6px}}header p{{font-size:13px}}main{{padding:0 14px 32px}}nav{{padding:8px 14px;flex-wrap:nowrap;overflow-x:auto}}nav button{{flex:none;min-height:36px}}.snap img{{height:170px}}.mx{{font-size:12.5px}}.mx td,.mx th{{padding:4px 6px;white-space:nowrap}}h2{{font-size:16px}}.showmore{{min-height:44px;width:100%}}}}
+@media(max-width:600px){{header{{padding:18px 14px 6px}}header p{{font-size:13px}}main{{padding:0 14px 32px}}nav{{padding:8px 14px;flex-wrap:nowrap;overflow-x:auto}}nav button{{flex:none;min-height:36px}}nav select{{order:-1;min-height:36px;min-width:150px;max-width:55vw}}.snap img{{height:170px}}.mx{{font-size:12.5px}}.mx td,.mx th{{padding:4px 6px;white-space:nowrap}}h2{{font-size:16px}}.showmore{{min-height:44px;width:100%}}}}
 #lb{{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:9}}#lb img{{max-width:96vw;max-height:94vh}}
 </style></head><body>
 <header><h1>{esc(name)} — competitor Meta ads that kept running</h1>
-<p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days (up to {DAY_CAP}) + {PER_CREATIVE} per extra ad using the creative (counted up to {CREATIVE_CAP} ads, so at most {PER_CREATIVE * CREATIVE_CAP} points) + 10 for multiple versions + EU reach bonus ({eu_n} of {len(rows)} ads have EU reach data{', so it moves no score yet' if not eu_n else ''}).
-Groups ranked by the best ad of each of their top {TOP_N} brands + {PER_BRAND} per extra brand, so one big brand can't carry a look. Each brand shows its best {SHOW_PER_BRAND} per group. Running long means the brand kept paying, not proof it sold. Short promo ads rarely reach {MIN_DAYS} days, so offers are under-represented here{cut_line}. Rebuilt {today.isoformat()} · {len(rows)} ads · {len(ranked)} looks.</p>
-<p>Grouped by the look: how the ad was shot, judged from the pictures (studio, editorial, polished location, casual phone-shot, product only), not by what the caption says. What the copy sells is the small tag on each card; filter by it below.</p></header>
+<p><b>Grouped by the look</b>: how each ad was shot, judged from the pictures (studio, editorial, polished location, casual phone-shot, product only), not by what the caption says. What the copy sells is the small tag on each card; filter by it with the menu. Long runs are a lower bound for ads still running. {len(rows)} ads · {len(ranked)} looks · rebuilt {today.isoformat()}.</p>
+<details><summary>How ads are kept and scored</summary><p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days (up to {DAY_CAP}) + {PER_CREATIVE} per extra ad using the creative (counted up to {CREATIVE_CAP} ads, so at most {PER_CREATIVE * CREATIVE_CAP} points) + 10 for multiple versions + EU reach bonus ({eu_n} of {len(rows)} ads have EU reach data{', so it moves no score yet' if not eu_n else ''}).
+Groups ranked by the best ad of each of their top {TOP_N} brands + {PER_BRAND} per extra brand, so one big brand can't carry a look. Each brand shows its best {SHOW_PER_BRAND} per group. Running long means the brand kept paying, not proof it sold. Short promo ads rarely reach {MIN_DAYS} days, so offers are under-represented here{cut_line}. </p></details></header>
 <nav><button class="on" data-b="">All brands</button>{chips}<select id="ang"><option value="">Any angle</option>{angles}</select></nav>
-<main>{matrix}{markets_table(out, rows, brands)}{"".join(parts) or "<p>No ads kept yet.</p>"}
+<main>{matrix}{markets_table(out, rows, brands)}{"".join(parts) or "<p>No ads kept yet.</p>"}<p id="none" class="stats" hidden>No ads match this brand and angle.</p>
 <details><summary>Searches ({len(runs_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Brand</th><th>How</th><th>Loaded</th><th>Kept</th><th>Left out, under {MIN_DAYS} days</th><th>Note</th></tr>{runs}</table></div></details>
 <details><summary>Group changes ({len(types_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Action</th><th>From</th><th>To</th><th>Reason</th></tr>{tlog}</table></div></details>
 </main><div id="lb"><img alt=""></div>
 <script>
 let fb='',fa='';const ang=document.getElementById('ang');
 function apply(){{const on=fb||fa;document.querySelectorAll('article').forEach(a=>a.style.display=(!fb||a.dataset.brand===fb)&&(!fa||a.dataset.angle===fa)?(on?'block':''):'none');
-document.querySelectorAll('section').forEach(s=>s.style.display=[...s.querySelectorAll('article')].some(a=>a.style.display!=='none')?'':'none')}}
+let any=0;document.querySelectorAll('section').forEach(s=>{{const v=[...s.querySelectorAll('article')].some(a=>a.style.display!=='none');s.style.display=v?'':'none';any+=v}});
+document.querySelectorAll('.showmore').forEach(b=>b.style.display=on?'none':'');document.getElementById('none').hidden=!!any}}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));fb=b.dataset.b;apply()}});
 ang.onchange=()=>{{fa=ang.value;apply()}};
 document.querySelectorAll('.showmore').forEach(b=>b.onclick=()=>{{b.closest('section').classList.add('open');b.remove()}});
