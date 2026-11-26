@@ -364,7 +364,7 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
                 f'<article{" class=more" if extra else ""}><div class="snap">{img}</div><div class="info">'
                 f'<div class="top"><span class="rank">#{i}</span><b>{esc(r["brand"])}</b>'
                 f'<span class="tag {esc(r.get("owner", ""))}">{"own ad" if r.get("owner") == "own" else "by " + esc(r.get("advertiser", ""))}</span>'
-                f'<span class="score">{r["score"]}</span></div>'
+                f'<span class="score">score {r["score"]}</span></div>'
                 f'<div class="meta">{" · ".join(esc(m) for m in meta if m)}</div>'
                 f'<p>{esc(r.get("body", ""))}</p>'
                 f'<a href="https://www.facebook.com/ads/library/?id={esc(r["library_id"])}" target="_blank" rel="noopener">Library ID {esc(r["library_id"])}</a>'
