@@ -1,0 +1,202 @@
+#Bupbes|BR t=16 n=14 done=true hit=
+#Bupbes|MX t=1 n=1 done=true hit=
+#Bupbes|EG t=0 n=0 done=true hit=
+#Bupbes|PK t=0 n=0 done=true hit=
+#Bupbes|TR t=0 n=0 done=true hit=
+#Bupbes|NG t=1 n=1 done=true hit=
+#Cherie|BR t=0 n=0 done=true hit=
+#Cherie|MX t=0 n=0 done=true hit=
+#Cherie|EG t=0 n=0 done=true hit=
+#Cherie|PK t=0 n=0 done=true hit=
+#JC de JC|BR t=0 n=0 done=true hit=
+#JC de JC|MX t=1 n=1 done=true hit=
+#JC de JC|EG t=0 n=0 done=true hit=
+#JC de JC|PK t=0 n=0 done=true hit=
+#Bupbes|CO t=0 n=0 done=true hit=
+#Bupbes|AR t=0 n=0 done=true hit=
+#Bupbes|PL t=0 n=0 done=true hit=
+#Bupbes|MA t=0 n=0 done=true hit=
+#Bupbes|LA t=0 n=0 done=true hit=
+#Cherie|TR t=0 n=0 done=true hit=
+#Cherie|NG t=0 n=0 done=true hit=
+#Cherie|CO t=0 n=0 done=true hit=
+#Cherie|AR t=0 n=0 done=true hit=
+#Cherie|PL t=0 n=0 done=true hit=
+#JC de JC|TR t=0 n=0 done=true hit=
+#JC de JC|NG t=0 n=0 done=true hit=
+#JC de JC|CO t=1 n=1 done=true hit=
+#JC de JC|AR t=1 n=1 done=true hit=
+#JC de JC|PL t=0 n=0 done=true hit=
+#Bupbes|MM t=0 n=0 done=true hit=
+#Bupbes|BN t=0 n=0 done=true hit=
+#Bupbes|MO t=0 n=0 done=true hit=
+#Bupbes|TL t=0 n=0 done=true hit=
+#Bupbes|MN t=0 n=0 done=true hit=
+#Cherie|MA t=0 n=0 done=true hit=
+#Cherie|IE t=0 n=0 done=true hit=
+#Cherie|NL t=0 n=0 done=true hit=
+#Cherie|BE t=0 n=0 done=true hit=
+#Cherie|ES t=0 n=0 done=true hit=
+#JC de JC|MA t=0 n=0 done=true hit=
+#JC de JC|LA t=0 n=0 done=true hit=
+#JC de JC|MM t=0 n=0 done=true hit=
+#JC de JC|BN t=0 n=0 done=true hit=
+#JC de JC|MO t=0 n=0 done=true hit=
+#Bupbes|IE t=0 n=0 done=true hit=
+#Bupbes|NL t=40 n=33 done=true hit=
+#Bupbes|BE t=0 n=0 done=true hit=
+#Bupbes|ES t=2 n=1 done=true hit=
+#Cherie|IT t=0 n=0 done=true hit=
+#Cherie|CH t=0 n=0 done=true hit=
+#Cherie|AT t=0 n=0 done=true hit=
+#Cherie|FJ t=0 n=0 done=true hit=
+#JC de JC|TL t=0 n=0 done=true hit=
+#Malimarea|BR t=1 n=1 done=true hit=
+#Malimarea|MX t=0 n=0 done=true hit=
+#Malimarea|EG t=0 n=0 done=true hit=
+#Bupbes|IT t=20 n=19 done=true hit=
+#Bupbes|CH t=15 n=12 done=true hit=
+#Bupbes|AT t=0 n=0 done=true hit=
+#Bupbes|SA t=0 n=0 done=true hit=
+#Bupbes|QA t=0 n=0 done=true hit=
+#Fanci Club|BR t=1 n=1 done=true hit=
+#Fanci Club|MX t=0 n=0 done=true hit=
+#Fanci Club|EG t=0 n=0 done=true hit=
+#Fanci Club|PK t=0 n=0 done=true hit=
+#Fanci Club|TR t=2 n=1 done=true hit=
+#Malimarea|PK t=0 n=0 done=true hit=
+#Malimarea|TR t=1 n=1 done=true hit=
+#Malimarea|NG t=0 n=0 done=true hit=
+#Malimarea|CO t=0 n=0 done=true hit=
+#Malimarea|AR t=0 n=0 done=true hit=
+#Bupbes|KW t=0 n=0 done=true hit=
+#Bupbes|OM t=0 n=0 done=true hit=
+#Bupbes|BH t=0 n=0 done=true hit=
+#Bupbes|FJ t=0 n=0 done=true hit=
+#JUBIN STUDIO|BR t=0 n=0 done=true hit=
+#Fanci Club|NG t=0 n=0 done=true hit=
+#Fanci Club|CO t=1 n=1 done=true hit=
+#Fanci Club|AR t=1 n=1 done=true hit=
+#Fanci Club|PL t=1 n=1 done=true hit=
+#Fanci Club|MA t=0 n=0 done=true hit=
+#Malimarea|PL t=4 n=4 done=true hit=
+#Malimarea|MA t=0 n=0 done=true hit=
+#Malimarea|FJ t=0 n=0 done=true hit=
+#Malimarea|IE t=3 n=3 done=true hit=
+#Malimarea|NL t=3 n=3 done=true hit=
+#JUBIN STUDIO|MX t=0 n=0 done=true hit=
+#JUBIN STUDIO|EG t=0 n=0 done=true hit=
+#JUBIN STUDIO|PK t=0 n=0 done=true hit=
+#JUBIN STUDIO|TR t=0 n=0 done=true hit=
+#JUBIN STUDIO|NG t=0 n=0 done=true hit=
+#IAM COCO|BR t=0 n=0 done=true hit=
+#IAM COCO|MX t=0 n=0 done=true hit=
+#IAM COCO|EG t=0 n=0 done=true hit=
+#IAM COCO|PK t=0 n=0 done=true hit=
+#Malimarea|BE t=3 n=3 done=true hit=
+#Malimarea|ES t=11 n=10 done=true hit=
+#Malimarea|IT t=11 n=10 done=true hit=
+#Malimarea|CH t=4 n=3 done=true hit=
+#Malimarea|AT t=3 n=3 done=true hit=
+#JUBIN STUDIO|CO t=0 n=0 done=true hit=
+#JUBIN STUDIO|AR t=0 n=0 done=true hit=
+#JUBIN STUDIO|PL t=0 n=0 done=true hit=
+#JUBIN STUDIO|MA t=0 n=0 done=true hit=
+#JUBIN STUDIO|LA t=0 n=0 done=true hit=
+#IAM COCO|TR t=0 n=0 done=true hit=
+#IAM COCO|NG t=0 n=0 done=true hit=
+#IAM COCO|CO t=0 n=0 done=true hit=
+#IAM COCO|AR t=0 n=0 done=true hit=
+#IAM COCO|PL t=0 n=0 done=true hit=
+#Malimarea|SA t=0 n=0 done=true hit=
+#Malimarea|QA t=5 n=5 done=true hit=
+#Malimarea|KW t=0 n=0 done=true hit=
+#Malimarea|OM t=0 n=0 done=true hit=
+#Malimarea|BH t=0 n=0 done=true hit=
+#JUBIN STUDIO|MM t=0 n=0 done=true hit=
+#JUBIN STUDIO|BN t=0 n=0 done=true hit=
+#JUBIN STUDIO|MO t=0 n=0 done=true hit=
+#JUBIN STUDIO|TL t=0 n=0 done=true hit=
+#JUBIN STUDIO|MN t=0 n=0 done=true hit=
+#IAM COCO|MA t=0 n=0 done=true hit=
+#IAM COCO|LA t=8 n=8 done=true hit=0.2.3.5.6.15.16.17
+#IAM COCO|MM t=0 n=0 done=true hit=
+#IAM COCO|BN t=0 n=0 done=true hit=
+#IAM COCO|MO t=0 n=0 done=true hit=
+#RUE de RUE|BR t=0 n=0 done=true hit=
+#RUE de RUE|MX t=0 n=0 done=true hit=
+#RUE de RUE|EG t=0 n=0 done=true hit=
+#RUE de RUE|PK t=0 n=0 done=true hit=
+#JUBIN STUDIO|FJ t=0 n=0 done=true hit=
+#JUBIN STUDIO|IE t=0 n=0 done=true hit=
+#JUBIN STUDIO|NL t=0 n=0 done=true hit=
+#JUBIN STUDIO|BE t=0 n=0 done=true hit=
+#JUBIN STUDIO|ES t=0 n=0 done=true hit=
+#IAM COCO|TL t=0 n=0 done=true hit=
+#IAM COCO|MN t=0 n=0 done=true hit=
+#IAM COCO|FJ t=0 n=0 done=true hit=
+#IAM COCO|CN t=40 n=39 done=true hit=0.1.2.3.4.5.6.7.8.9.11.12.13.15.16.17.18.19.20.21.22.23.24.25.26.27.28.29.30.31.32.33
+#IAM COCO|BD t=0 n=0 done=true hit=
+#RUE de RUE|TR t=0 n=0 done=true hit=
+#RUE de RUE|NG t=0 n=0 done=true hit=
+#RUE de RUE|CO t=1 n=1 done=true hit=
+#RUE de RUE|AR t=0 n=0 done=true hit=
+#RUE de RUE|PL t=2 n=2 done=true hit=
+#JUBIN STUDIO|IT t=0 n=0 done=true hit=
+#JUBIN STUDIO|CH t=0 n=0 done=true hit=
+#JUBIN STUDIO|AT t=0 n=0 done=true hit=
+#JUBIN STUDIO|CN t=0 n=0 done=true hit=
+#Viery|BR t=0 n=0 done=true hit=
+#IAM COCO|NP t=0 n=0 done=true hit=
+#IAM COCO|BT t=0 n=0 done=true hit=
+#IAM COCO|AF t=0 n=0 done=true hit=
+#IAM COCO|KZ t=0 n=0 done=true hit=
+#IAM COCO|KG t=0 n=0 done=true hit=
+#RUE de RUE|MA t=0 n=0 done=true hit=
+#RUE de RUE|LA t=0 n=0 done=true hit=
+#RUE de RUE|MM t=0 n=0 done=true hit=
+#RUE de RUE|BN t=0 n=0 done=true hit=
+#RUE de RUE|MO t=0 n=0 done=true hit=
+#Viery|MX t=0 n=0 done=true hit=
+#Viery|EG t=0 n=0 done=true hit=
+#Viery|PK t=0 n=0 done=true hit=
+#Viery|TR t=0 n=0 done=true hit=
+#Viery|NG t=0 n=0 done=true hit=
+#IAM COCO|TJ t=0 n=0 done=true hit=
+#IAM COCO|RU t=0 n=0 done=true hit=
+#IAM COCO|PE t=0 n=0 done=true hit=
+#IAM COCO|DZ t=0 n=0 done=true hit=
+#IAM COCO|IQ t=0 n=0 done=true hit=
+#RUE de RUE|TL t=0 n=0 done=true hit=
+#RUE de RUE|CN t=4 n=4 done=true hit=
+#JC de JC|CN t=0 n=0 done=true hit=
+#Viery|CO t=0 n=0 done=true hit=
+#Viery|AR t=0 n=0 done=true hit=
+#Viery|PL t=0 n=0 done=true hit=
+#Viery|MA t=0 n=0 done=true hit=
+#Viery|LA t=0 n=0 done=true hit=
+#IAM COCO|ES t=0 n=0 done=true hit=
+#IAM COCO|IT t=0 n=0 done=true hit=
+#IAM COCO|ZA t=0 n=0 done=true hit=
+#IAM COCO|KE t=0 n=0 done=true hit=
+#IAM COCO|VE t=0 n=0 done=true hit=
+#IAM COCO|CL t=0 n=0 done=true hit=
+#Maël|BR t=0 n=0 done=true hit=
+#Maël|MX t=0 n=0 done=true hit=
+#Maël|EG t=0 n=0 done=true hit=
+#Maël|PK t=0 n=0 done=true hit=
+#Viery|MM t=0 n=0 done=true hit=
+#Viery|BN t=0 n=0 done=true hit=
+#Viery|MO t=0 n=0 done=true hit=
+#Viery|TL t=0 n=0 done=true hit=
+#Viery|CN t=0 n=0 done=true hit=
+#Bupbes|CN t=1 n=1 done=true hit=
+#Maël|CN t=0 n=0 done=true hit=
+#Maël|TL t=0 n=0 done=true hit=
+#Maël|MN t=0 n=0 done=true hit=
+#Maël|TR t=0 n=0 done=true hit=
+#Maël|NG t=0 n=0 done=true hit=
+#Maël|CO t=0 n=0 done=true hit=
+#Maël|AR t=0 n=0 done=true hit=
+#Maël|PL t=1 n=1 done=true hit=
+#Maël|MA t=0 n=0 done=true hit=

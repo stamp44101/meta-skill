@@ -52,7 +52,7 @@ The library shows no country on ads outside the EU, but its country filter lists
 2. Per market: navigate (`&country=XX`, same `q` and `search_type` as step 1), paste SCROLL, wait, paste CHECK, and append the line it returns to a results file. Run SCROLL + CHECK again on long pages until `n` stops growing; passes add up.
 3. `python3 -I scripts/build.py geo meta-<brand> <results file> <today>` (keep the file as `runs/<date>-geo.txt`) fills `countries` and logs every check in `geo-log.tsv`.
 
-Markets: the list in `build.py` (`MARKETS`, 20: SHER's region, the big English-language markets, the Gulf, FR and DE); add the user's markets if they name others. Several tabs can run in parallel (one `browser_batch` per tab). A kept ad not seen in any market may still have run elsewhere: write "not seen in the N markets checked", never "did not run".
+Markets: start with the list in `build.py` (`MARKETS`, 20: SHER's region, the big English-language markets, the Gulf, FR and DE) plus any the user names. Then per brand, check batches: the 10 biggest Facebook countries not yet checked for that brand plus the unchecked neighbours of countries where its ads were seen. Stop that brand when a batch finds no new country; otherwise run another batch. Several tabs can run in parallel (one `browser_batch` per tab). A kept ad not seen in any market may still have run elsewhere: write "not seen in the N markets checked", never "did not run".
 
 ### 3. Snapshot grid per kept ad
 
