@@ -4,7 +4,7 @@
 
 ### Run 1 — 25 Nov 2026, Malimarea (v0.1)
 - Search: keyword "malimarea", all statuses, all countries, FB+IG. 91 ads loaded (library says ~130), 87 own, 4 by others (all under 30 days).
-- Kept 10 (30+ days). 52 more had 2+ ads on the creative but ran under 30 days: left out (README, Open for discuss 1).
+- Kept 10 (30+ days). 52 more had 2+ ads on the creative but ran under 30 days: left out (the 30-day rule).
 - Snapshot grids: 8 videos (6 frames each), 2 images. No download, no paid tool.
 - Same creative under two IDs (2187111091693389 and 1684969342823966) merged into one row by image hash: 9 rows.
 - Types: "new drop or collection" (8), "discount or code" (1).

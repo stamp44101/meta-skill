@@ -41,7 +41,7 @@ from datetime import date
 COLS = ["library_id", "brand", "advertiser", "page_id", "owner", "type", "angle", "status", "start", "end",
         "days", "creatives", "versions", "format", "media", "video_sec", "eu_reach", "countries",
         "score", "body", "cta", "image", "creative_hash", "first_seen", "last_seen", "note"]
-MIN_DAYS = 30        # decision 2: newer ads are never saved
+MIN_DAYS = 30        # the brief: ads live under 30 days are never saved
 PER_CREATIVE = 5     # points for every extra ad using the same creative (kept small: copies are cheap)
 CREATIVE_CAP = 10    # ...counted up to 10 extra ads
 SHOW_PER_BRAND = 4   # a group shows each brand's best 4 ads; the rest sit behind "show more"
