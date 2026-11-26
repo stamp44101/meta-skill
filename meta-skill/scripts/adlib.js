@@ -41,7 +41,6 @@
     const imgs = [...c.querySelectorAll('img')].filter(i => i.naturalWidth > 100).length;
     const media = vids + imgs;
     const format = media > 1 ? (vids ? 'carousel-video' : 'carousel') : vids ? 'video' : imgs ? 'image' : 'text';
-    const lens = [...t.matchAll(/0:00 \/ (\d+):(\d\d)/g)].map(m => +m[1] * 60 + +m[2]);
     // body = lines after the advertiser/Sponsored block until the first media/time/CTA marker
     const body = [];
     for (let i = si + 1; i < lines.length && body.join(' ').length < 400; i++) {

@@ -36,7 +36,7 @@ Paste `scripts/adlib.js` into the tab with `javascript_tool` after every navigat
 
 - `MA.autoscroll()` starts loading in the background and returns at once. Wait (10 s waits in `browser_batch`), then `MA.status()` until `done` is true. Never scroll inside one long call: past ~100 cards the tab freezes and the call times out. Big brands stall before the library's total (Bupbes: 456 of ~830); say so in the run log.
 - `MA.export(30, '<today>')` puts every loaded ad that ran 30+ days on the page as text and hides the rest; `get_page_text` then saves it to a file (it is padded past 50 KB on purpose; tool results are cut off past ~1,500 characters). `MA.clearOut()` restores the page.
-- `python3 -I scripts/build.py import <saved file> <Brand> "<own page names>" <today> > draft.json` turns it into a draft run: own vs other by advertiser name, and videos or carousels with the same copy and card count folded into one row (the other IDs go in the note). Single images are never folded: same copy often means different pictures.
+- `python3 -I scripts/build.py import <saved file> <Brand> "<own page names>" <today> > draft.json` turns it into a draft run: own vs other by advertiser name, one row per Library ID. Ads are never folded by caption; build.py merges the same picture shown under another Library ID by image hash.
 
 ### 2. Keep the working ads
 
@@ -118,5 +118,5 @@ Send the HTML with one line per brand (found → kept), and any looks merged or 
 ## Iteration
 
 - A re-run updates dates, status and score of ads already in the file; it never adds them twice. An ad that stopped stays in, marked ended.
-- Re-run a brand when the user asks, or when new ads have had 30 days to prove themselves.
+- Re-run a brand when the user asks.
 - Known limits are listed in `README.md` → Known limits. Don't change the brief's rules without the user.

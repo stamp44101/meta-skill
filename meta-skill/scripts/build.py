@@ -24,7 +24,7 @@ run.json (written by the agent during a run):
   "ads": [{"id": "...", "brand": "Bupbes", "advertiser": "Bupbes", "page_id": "...", "owner": "own|other",
            "type": "polished lookbook", "status": "active|ended", "start": "YYYY-MM-DD", "end": "",
            "creatives": 2, "versions": false, "format": "video", "media": 1,
-           "eu_reach": "", "countries": "", "body": "...", "cta": "", "image": "images/<id>.png", "note": ""}],
+           "eu_reach": "", "countries": "", "body": "...", "image": "images/<id>.png", "note": ""}],
   "types_log": [{"action": "new|merge|split|rename", "from": "a, b", "to": "c", "reason": "..."}],
   "retype": {"<id>": "<look>"}
 }
@@ -39,7 +39,7 @@ from datetime import date
 
 COLS = ["library_id", "brand", "advertiser", "page_id", "owner", "type", "status", "start", "end",
         "days", "creatives", "versions", "format", "media", "eu_reach", "countries",
-        "score", "body", "cta", "image", "creative_hash", "first_seen", "last_seen", "note"]
+        "score", "body", "image", "creative_hash", "first_seen", "last_seen", "note"]
 MIN_DAYS = 30        # the brief: ads live under 30 days are never saved
 PER_CREATIVE = 5     # points for every extra ad using the same creative (kept small: copies are cheap)
 CREATIVE_CAP = 10    # ...counted up to 10 extra ads
@@ -358,8 +358,8 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
                     "multiple versions" if r.get("versions") == "yes" else "",
                     r.get("format", ""),
                     f'EU reach {int(float(r["eu_reach"])):,}' if r.get("eu_reach") else "",
-                    ("seen in " + r["countries"]) if r.get("countries") else
-                    (f'not seen in the {len(checked[r["brand"]])} countries checked' if r["brand"] in checked else "")]
+                    (f'seen in {r["countries"]} (of {len(checked.get(r["brand"], ()))} countries checked)' if r.get("countries") else
+                     f'not seen in the {len(checked[r["brand"]])} countries checked' if r["brand"] in checked else "")]
             cards.append(
                 f'<article data-brand="{esc(r["brand"])}"{" class=more" if extra else ""}><div class="snap">{img}</div><div class="info">'
                 f'<div class="top"><span class="rank">#{i}</span><b>{esc(r["brand"])}</b>'
@@ -415,9 +415,9 @@ header details{{margin:6px 0 0}}header details p{{margin:4px 0 0}}article.more{{
 <header><h1>{esc(name)} — competitor Meta ads that kept running</h1>
 <p>Grouped by how each ad was shot, judged from the pictures, not by what the caption says. Inside each group, ads are ranked by score. {len(rows)} ads · {len(ranked)} groups · rebuilt {today.isoformat()}.</p>
 <details><summary>How ads are kept and scored</summary><p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days + {PER_CREATIVE} per extra ad using the creative (counted up to {CREATIVE_CAP} ads, so at most {PER_CREATIVE * CREATIVE_CAP} points) + 10 for multiple versions + EU reach bonus (10 at 10,000 people reached in the EU, 20 at 100,000; {eu_n} of {len(rows)} ads have EU reach{f", the highest {eu_max:,}" if eu_n else ""}).
-Ads still running count days up to the day they were last seen live. Ads under {MIN_DAYS} days are left out{cut_line}.</p></details></header>
+Ads still running count days up to the day they were last seen live. Where an ad ran: each brand's search is repeated with the Ad Library country filter, one country at a time (every check is in geo-log.tsv); "not seen" means the filter did not show it in any country checked. Ads under {MIN_DAYS} days are left out{cut_line}.</p></details></header>
 <nav><button class="on" data-b="">All brands</button>{chips}</nav>
-<main>{markets_table(out, rows, brands)}{"".join(parts) or "<p>No ads kept yet.</p>"}
+<main>{"".join(parts) or "<p>No ads kept yet.</p>"}
 <details><summary>Searches ({len(runs_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Brand</th><th>How</th><th>Loaded</th><th>Kept</th><th>Left out, under {MIN_DAYS} days</th><th>Note</th></tr>{runs}</table></div></details>
 <details><summary>Group changes ({len(types_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Action</th><th>From</th><th>To</th><th>Reason</th></tr>{tlog}</table></div></details>
 </main><div id="lb"><img alt=""></div>
@@ -444,9 +444,8 @@ def norm(t):
 def import_export(path, brand, own_names, today):
     """Turn an adlib.js export (page text saved by get_page_text) into a draft run.
 
-    One ad per creative: ads from the same advertiser with the same copy, format and card
-    count are one creative shown under several Library IDs. The draft keeps the longest-running
-    ID, the widest dates and the largest creative count, and lists the other IDs in the note.
+    One row per Library ID. Ads are never folded by caption; the same picture shown under another
+    Library ID is merged later by image hash (merge()).
     The agent fills in type (the look, judged from the snapshot), owner where the guess is wrong, and the image paths.
     """
     text = open(path, encoding="utf-8").read()
@@ -464,9 +463,7 @@ def import_export(path, brand, own_names, today):
         if not lid.isdigit():
             print(f"skipped line, ID unreadable: {line[:60]}", file=sys.stderr)
             continue
-        # single images with the same copy are often different pictures (multiple versions), so
-        # only videos and carousels are folded together here; build.py still merges exact image matches
-        key = (adv.lower(), norm(body), fmt, media) if fmt != "image" else (lid,)
+        key = (lid,)  # one row per Library ID; the same picture under another ID is merged by image hash in merge()
         ad = {"id": lid, "brand": brand, "advertiser": adv, "page_id": pid,
               "owner": "own" if adv.lower() in own else "other", "type": "", "status": status,
               "start": start, "end": end, "days": int(days), "creatives": int(n or 1), "versions": ver == "1",
