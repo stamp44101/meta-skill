@@ -22,31 +22,28 @@ run.json (written by the agent during a run):
   "date": "2026-11-25",
   "searches": [{"brand": "Bupbes", "how": "page 1234 | phrase \\"bupbes\\"", "found": 830, "kept": 41, "note": ""}],
   "ads": [{"id": "...", "brand": "Bupbes", "advertiser": "Bupbes", "page_id": "...", "owner": "own|other",
-           "type": "polished lookbook", "angle": "single piece spotlight", "status": "active|ended", "start": "YYYY-MM-DD", "end": "",
+           "type": "polished lookbook", "status": "active|ended", "start": "YYYY-MM-DD", "end": "",
            "creatives": 2, "versions": false, "format": "video", "media": 1, "video_sec": 13,
            "eu_reach": "", "countries": "", "body": "...", "cta": "", "image": "images/<id>.png", "note": ""}],
   "types_log": [{"action": "new|merge|split|rename", "from": "a, b", "to": "c", "reason": "..."}],
-  "retype": {"<id>": "<look>"},
-  "reangle": {"<id>": "<angle>"}
+  "retype": {"<id>": "<look>"}
 }
 Runs saved before v0.4 (2026-11-26) carry caption types in `type`; merging one again keeps the looks and
-moves its types into `angle`.
+leaves those ads' looks as they are.
 `type` is the look: how the ad was shot, judged from the snapshot (studio, editorial, casual phone...),
-never from the caption. `angle` is what the copy sells (one piece, a new drop...), shown as a tag and filter.
+never from the caption.
 Only the standard library and Pillow are used.
 """
 import base64, csv, io, json, math, os, sys
 from datetime import date
 
-COLS = ["library_id", "brand", "advertiser", "page_id", "owner", "type", "angle", "status", "start", "end",
+COLS = ["library_id", "brand", "advertiser", "page_id", "owner", "type", "status", "start", "end",
         "days", "creatives", "versions", "format", "media", "video_sec", "eu_reach", "countries",
         "score", "body", "cta", "image", "creative_hash", "first_seen", "last_seen", "note"]
 MIN_DAYS = 30        # the brief: ads live under 30 days are never saved
 PER_CREATIVE = 5     # points for every extra ad using the same creative (kept small: copies are cheap)
 CREATIVE_CAP = 10    # ...counted up to 10 extra ads
-SHOW_PER_BRAND = 4   # a group shows each brand's best 4 ads; the rest sit behind "show more"
-FLIGHT_MIN = 5       # this many ads from one brand ending within FLIGHT_DAYS of each other get a note saying so
-FLIGHT_DAYS = 3
+SHOW_FIRST = 12      # each look shows its first 12 ads in rank order; the rest sit behind "show all"
 # markets checked one by one with the Ad Library country filter (README: Known limits 4)
 MARKETS = "TH VN SG MY ID PH HK TW KR JP AU NZ US CA GB IN AE KH FR DE".split()
 GL = ["date", "brand", "country", "results", "cards", "complete", "seen"]
@@ -75,22 +72,6 @@ def dhash(path):
         im = im.crop((0, im.height // 10, im.width, im.height))  # skip the caption line
         im = im.resize((9, 8))
         px = list(im.tobytes())
-        bits = "".join("1" if px[r * 9 + c] > px[r * 9 + c + 1] else "0" for r in range(8) for c in range(8))
-        return "%016x" % int(bits, 2)
-    except Exception:
-        return ""
-
-
-def first_tile_hash(path):
-    """dHash of the first card or frame of a grid, so one picture shown as a single image and as
-    the first card of a carousel still matches."""
-    try:
-        from PIL import Image
-        im = Image.open(path).convert("L")
-        h = im.height
-        top = int(h * 0.1)
-        t = im.crop((6, top, 6 + int((h - top) * 0.78), h - 4)).resize((9, 8))
-        px = list(t.tobytes())
         bits = "".join("1" if px[r * 9 + c] > px[r * 9 + c + 1] else "0" for r in range(8) for c in range(8))
         return "%016x" % int(bits, 2)
     except Exception:
@@ -129,7 +110,7 @@ def merge(out, run, rows, types_log, runs_log):
     today = date.fromisoformat(run.get("date") or date.today().isoformat())
     by_id = {r["library_id"]: r for r in rows}
     # `type` is the look. A run may only use a look already in the file or one its types_log adds;
-    # anything else (e.g. a caption type from a pre-v0.4 run) is kept as the angle, never as a new group.
+    # anything else (e.g. a caption type from a pre-v0.4 run) is dropped with a warning, never made a new group.
     looks = {r.get("type") for r in rows if r.get("type")} | {
         str(e.get("to", "")).strip() for e in run.get("types_log", []) if e.get("action") in ("new", "split", "rename", "regroup")}
     added = updated = skipped = 0
@@ -141,8 +122,7 @@ def merge(out, run, rows, types_log, runs_log):
         a["days"] = days_of(a, today)
         a["versions"] = "yes" if a.get("versions") in (True, "true", "yes", 1, "1") else "no"
         if looks and a.get("type") and a["type"] not in looks:
-            print(f'{a["library_id"]}: "{a["type"]}" is not a look in this file; kept as angle', file=sys.stderr)
-            a["angle"] = a.get("angle") or a["type"]
+            print(f'{a["library_id"]}: "{a["type"]}" is not a look in this file and its run adds no such look; type left empty', file=sys.stderr)
             a["type"] = ""
         if a["days"] < MIN_DAYS:
             skipped += 1
@@ -169,13 +149,12 @@ def merge(out, run, rows, types_log, runs_log):
             hit["last_seen"] = today.isoformat()
             updated += 1
         elif hit:
-            keep_type, keep_angle = hit.get("type"), hit.get("angle")
+            keep_type = hit.get("type")
             for k, v in a.items():
-                if k in ("library_id", "first_seen", "note", "type", "angle") or v in ("", None):
+                if k in ("library_id", "first_seen", "note", "type") or v in ("", None):
                     continue
                 hit[k] = v
             hit["type"] = a.get("type") or keep_type
-            hit["angle"] = a.get("angle") or keep_angle
             hit["last_seen"] = today.isoformat()
             updated += 1
         else:
@@ -186,9 +165,6 @@ def merge(out, run, rows, types_log, runs_log):
     for lid, t in (run.get("retype") or {}).items():
         if lid in by_id:
             by_id[lid]["type"] = t
-    for lid, t in (run.get("reangle") or {}).items():
-        if lid in by_id:
-            by_id[lid]["angle"] = t
     for e in run.get("types_log", []):
         e = {"date": today.isoformat(), **{k: str(v) for k, v in e.items()}}
         if e in types_log:  # the same run merged twice
@@ -207,32 +183,9 @@ def merge(out, run, rows, types_log, runs_log):
 
 
 def rescore(rows, today):
-    from collections import Counter
-    from datetime import date as _d
-    ended = [r for r in rows if r.get("status") == "ended" and r.get("end")]
-    copies = Counter((r["brand"], norm(r.get("body", ""))) for r in rows)
     for r in rows:
         r["days"] = days_of(r, today)
         r["score"] = score(r)
-        r["_flight"] = ""
-        if r.get("status") == "ended" and r.get("end"):
-            e = _d.fromisoformat(r["end"])
-            near = [x for x in ended if x["brand"] == r["brand"] and abs((_d.fromisoformat(x["end"]) - e).days) <= FLIGHT_DAYS]
-            if len(near) >= FLIGHT_MIN:
-                lo = min(x["end"] for x in near); hi = max(x["end"] for x in near)
-                r["_flight"] = f"ended with {len(near) - 1} other {r['brand']} ads between {lo} and {hi}"
-        same = [x for x in rows if x is not r and x["brand"] == r["brand"] and norm(x.get("body", "")) == norm(r.get("body", "")) and norm(r.get("body", ""))]
-        if same:
-            twin = sum(1 for x in same if hamming(x.get("_ft", ""), r.get("_ft", "")) <= 3)
-            other = len(same) - twin
-            bits = []
-            if other:
-                bits.append(f"same copy as {other} other ad{'s' if other > 1 else ''} here with a different picture")
-            if twin:
-                bits.append(f"same copy and picture as {twin} other ad{'s' if twin > 1 else ''} here in another format")
-            r["_copies"] = "; ".join(bits)
-        else:
-            r["_copies"] = ""
 
 
 def rank(rows):
@@ -275,20 +228,6 @@ def median(xs):
         return ""
     m = len(xs) // 2
     return xs[m] if len(xs) % 2 else round((xs[m - 1] + xs[m]) / 2)
-
-
-def group_stats(ads):
-    from collections import Counter
-    n = len(ads)
-    fm = Counter(("video" if "video" in r["format"] else r["format"]) for r in ads)
-    vids = [int(float(r["video_sec"])) for r in ads if str(r.get("video_sec", "")).strip() not in ("", "0")]
-    parts = [", ".join(f"{k} {round(100 * v / n)}%" for k, v in fm.most_common())]
-    if vids:
-        parts.append(f"videos ~{median(vids)}s")
-    parts.append(f"median run {median([int(r['days']) for r in ads])} days")
-    live = sum(r.get("status") == "active" for r in ads)
-    parts.append(f"{live} of {n} still running ({round(100 * live / n)}%)")
-    return " · ".join(parts)
 
 
 def geo_ids(out, brand):
@@ -400,19 +339,17 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
     for _, t, gbrands, ads in ranked:
         cells = []
         for b in brands:
-            mine = [int(r["score"]) for r in ads if r["brand"] == b]
-            cells.append(f'<td>{len(mine)} <small>· {max(mine)}</small></td>' if mine else '<td class="nil">–</td>')
+            n = sum(r["brand"] == b for r in ads)
+            cells.append(f'<td>{n}</td>' if n else '<td class="nil">–</td>')
         mrows.append(f'<tr><th>{esc(t)}</th>{"".join(cells)}</tr>')
     totals = "".join(f'<td><b>{sum(r["brand"] == b for r in rows)}</b></td>' for b in brands)
-    matrix = (f'<div class="scroll"><table class="mx"><tr><th>look \\ brand: ads · best score</th>{"".join(f"<th>{esc(b)}</th>" for b in brands)}</tr>'
+    matrix = (f'<div class="scroll"><table class="mx"><tr><th>look \\ brand: ads</th>{"".join(f"<th>{esc(b)}</th>" for b in brands)}</tr>'
               f'{"".join(mrows)}<tr><th>all</th>{totals}</tr></table></div>')
     parts = []
     for _, t, gbrands, ads in ranked:
         cards = []
-        seen = {}
         for i, r in enumerate(ads, 1):
-            seen[r["brand"]] = seen.get(r["brand"], 0) + 1
-            extra = seen[r["brand"]] > SHOW_PER_BRAND
+            extra = i > SHOW_FIRST
             src = thumb(os.path.join(out, r["image"])) if r.get("image") else ""
             img = f'<img src="{src}" alt="">' if src else '<div class="noimg">no snapshot</div>'
             meta = [life(r), f'{r["creatives"]} ads use this creative' if int(r.get("creatives") or 1) > 1 else "",
@@ -421,27 +358,22 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
                     f'EU reach {int(float(r["eu_reach"])):,}' if r.get("eu_reach") else "",
                     ("seen in " + r["countries"]) if r.get("countries") else
                     (f'not seen in the {len(checked[r["brand"]])} countries checked' if r["brand"] in checked else "")]
-            flags = [f for f in (r.get("_flight"), r.get("_copies")) if f]
-            angle = f'<div class="angle">{esc(r["angle"])}</div>' if r.get("angle") else ""
             cards.append(
-                f'<article data-brand="{esc(r["brand"])}" data-angle="{esc(r.get("angle", ""))}"{" class=more" if extra else ""}><div class="snap">{img}</div><div class="info">'
+                f'<article data-brand="{esc(r["brand"])}"{" class=more" if extra else ""}><div class="snap">{img}</div><div class="info">'
                 f'<div class="top"><span class="rank">#{i}</span><b>{esc(r["brand"])}</b>'
                 f'<span class="tag {esc(r.get("owner", ""))}">{"own ad" if r.get("owner") == "own" else "by " + esc(r.get("advertiser", ""))}</span>'
                 f'<span class="score">{r["score"]}</span></div>'
-                f'{angle}'
                 f'<div class="meta">{" · ".join(esc(m) for m in meta if m)}</div>'
-                f'{"".join(f"<div class=flag>{esc(x)}</div>" for x in flags)}'
                 f'<p>{esc(r.get("body", ""))}</p>'
                 f'<a href="https://www.facebook.com/ads/library/?id={esc(r["library_id"])}" target="_blank" rel="noopener">Library ID {esc(r["library_id"])}</a>'
                 f'{" · " + esc(r["note"]) if r.get("note") else ""}</div></article>')
         hidden = sum(1 for c in cards if " class=more" in c)
         nt = notes.get(t, {})
-        note = (f'<div class="note"><p><b>What it is:</b> {esc(nt.get("takeaway", ""))}</p>'
-                f'</div>') if nt and nt.get("takeaway") else ""
-        more = f'<button class="showmore">show {hidden} more (each brand capped at {SHOW_PER_BRAND})</button>' if hidden else ""
+        note = f'<div class="note"><p>{esc(nt["takeaway"])}</p></div>' if nt.get("takeaway") else ""
+        more = f'<button class="showmore">show all {len(ads)}</button>' if hidden else ""
         parts.append(f'<section><h2>{esc(t)}<small>'
                      f'{len(ads)} ads · {len(gbrands)} brand{"s" if len(gbrands) > 1 else ""}: {esc(", ".join(gbrands))}</small></h2>'
-                     f'<div class="stats">{esc(group_stats(ads))}</div>{note}'
+                     f'{note}'
                      f'<div class="grid">{"".join(cards)}</div>{more}</section>')
     runs = "".join(f'<tr><td>{esc(s.get("date"))}</td><td>{esc(s.get("brand"))}</td><td>{esc(s.get("how"))}</td>'
                    f'<td>{esc(s.get("found"))}</td><td>{esc(s.get("kept"))}</td><td>{esc(s.get("under_30", ""))}</td><td>{esc(s.get("note"))}</td></tr>' for s in runs_log[::-1])
@@ -452,8 +384,6 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
     eu_n = sum(1 for r in rows if r.get("eu_reach"))
     eu_max = max([int(float(r["eu_reach"])) for r in rows if r.get("eu_reach")] or [0])
     chips = "".join(f'<button data-b="{esc(b)}">{esc(b)}</button>' for b in brands)
-    from collections import Counter as _C
-    angles = "".join(f'<option value="{esc(a)}">{esc(a)} ({n})</option>' for a, n in _C(r.get("angle", "") for r in rows).most_common() if a)
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(name)} — competitor Meta ads</title><style>
 :root{{--bg:#faf9f7;--fg:#1d1b19;--mute:#77716b;--line:#e6e1da;--card:#fff;--acc:#8a2b3a}}
@@ -472,31 +402,28 @@ article{{background:var(--card);border:1px solid var(--line);border-radius:10px;
 .meta{{color:var(--mute);font-size:12.5px;margin:4px 0}}article p{{margin:6px 0;font-size:13px;max-height:5.8em;overflow:hidden}}a{{color:var(--acc)}}
 details{{margin-top:30px}}table{{border-collapse:collapse;width:100%;font-size:13px}}td,th{{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top}}
 .stats{{color:var(--mute);font-size:13px;margin:-4px 0 8px}}.note{{background:var(--card);border-left:3px solid var(--acc);padding:6px 12px;margin:0 0 12px;border-radius:4px}}.note p{{margin:4px 0}}
-.flag{{font-size:12px;color:var(--acc);margin:2px 0}}.angle{{display:inline-block;font-size:11.5px;color:var(--mute);background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:0 8px;margin:4px 0 0}}
-nav select{{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:99px;padding:4px 10px;font:inherit;flex-shrink:0;min-width:180px}}
 header details{{margin:6px 0 0}}header details p{{margin:4px 0 0}}article.more{{display:none}}section.open article.more{{display:block}}
 .showmore{{margin:10px 0;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:6px;padding:5px 12px;cursor:pointer}}
 .mx{{width:auto;margin:14px 0 4px}}.mx td,.mx th{{padding:4px 10px}}.mx td{{text-align:center}}.mx td small{{color:var(--mute)}}.mx .nil{{color:var(--line)}}
 :root[data-theme=dark]{{--bg:#151413;--fg:#eee9e3;--mute:#9c958e;--line:#2c2926;--card:#1e1c1a;--acc:#e48a99}}:root[data-theme=light]{{--bg:#faf9f7;--fg:#1d1b19;--mute:#77716b;--line:#e6e1da;--card:#fff;--acc:#8a2b3a}}
-@media(max-width:600px){{header{{padding:18px 14px 6px}}header p{{font-size:13px}}main{{padding:0 14px 32px}}nav{{padding:8px 14px;flex-wrap:nowrap;overflow-x:auto}}nav button{{flex:none;min-height:36px}}nav select{{order:-1;min-height:36px;min-width:150px;max-width:55vw}}.snap img{{height:170px}}.mx{{font-size:12.5px}}.mx td,.mx th{{padding:4px 6px;white-space:nowrap}}h2{{font-size:16px}}.showmore{{min-height:44px;width:100%}}}}
+@media(max-width:600px){{header{{padding:18px 14px 6px}}header p{{font-size:13px}}main{{padding:0 14px 32px}}nav{{padding:8px 14px;flex-wrap:nowrap;overflow-x:auto}}nav button{{flex:none;min-height:36px}}.snap img{{height:170px}}.mx{{font-size:12.5px}}.mx td,.mx th{{padding:4px 6px;white-space:nowrap}}h2{{font-size:16px}}.showmore{{min-height:44px;width:100%}}}}
 #lb{{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:9}}#lb img{{max-width:96vw;max-height:94vh}}
 </style></head><body>
 <header><h1>{esc(name)} — competitor Meta ads that kept running</h1>
-<p><b>Grouped by the look</b>: how each ad was shot, judged from the pictures (studio, editorial, polished lookbook, casual phone-shot, graphic layout), not by what the caption says. What the copy sells is the small tag on each card; filter by it with the menu. Long runs are a lower bound for ads still running. {len(rows)} ads · {len(ranked)} looks · rebuilt {today.isoformat()}.</p>
+<p>Grouped by how each ad was shot, judged from the pictures, not by what the caption says. Inside each group, ads are ranked by score. {len(rows)} ads · {len(ranked)} groups · rebuilt {today.isoformat()}.</p>
 <details><summary>How ads are kept and scored</summary><p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days + {PER_CREATIVE} per extra ad using the creative (counted up to {CREATIVE_CAP} ads, so at most {PER_CREATIVE * CREATIVE_CAP} points) + 10 for multiple versions + EU reach bonus (10 at 10,000 people reached in the EU, 20 at 100,000; {eu_n} of {len(rows)} ads have EU reach{f", the highest {eu_max:,}" if eu_n else ""}).
-Ads are ranked by score inside each look; each brand shows its best {SHOW_PER_BRAND} per look. Ads under {MIN_DAYS} days are left out{cut_line}.</p></details></header>
-<nav><button class="on" data-b="">All brands</button>{chips}<select id="ang"><option value="">Any angle</option>{angles}</select></nav>
-<main>{matrix}{markets_table(out, rows, brands)}{"".join(parts) or "<p>No ads kept yet.</p>"}<p id="none" class="stats" hidden>No ads match this brand and angle.</p>
+Ads still running count days up to the day they were last seen live. Ads under {MIN_DAYS} days are left out{cut_line}.</p></details></header>
+<nav><button class="on" data-b="">All brands</button>{chips}</nav>
+<main>{matrix}{markets_table(out, rows, brands)}{"".join(parts) or "<p>No ads kept yet.</p>"}
 <details><summary>Searches ({len(runs_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Brand</th><th>How</th><th>Loaded</th><th>Kept</th><th>Left out, under {MIN_DAYS} days</th><th>Note</th></tr>{runs}</table></div></details>
 <details><summary>Group changes ({len(types_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Action</th><th>From</th><th>To</th><th>Reason</th></tr>{tlog}</table></div></details>
 </main><div id="lb"><img alt=""></div>
 <script>
-let fb='',fa='';const ang=document.getElementById('ang');
-function apply(){{const on=fb||fa;document.querySelectorAll('article').forEach(a=>a.style.display=(!fb||a.dataset.brand===fb)&&(!fa||a.dataset.angle===fa)?(on?'block':''):'none');
-let any=0;document.querySelectorAll('section').forEach(s=>{{const v=[...s.querySelectorAll('article')].some(a=>a.style.display!=='none');s.style.display=v?'':'none';any+=v}});
-document.querySelectorAll('.showmore').forEach(b=>b.style.display=on?'none':'');document.getElementById('none').hidden=!!any}}
+let fb='';
+function apply(){{document.querySelectorAll('article').forEach(a=>a.style.display=!fb||a.dataset.brand===fb?(fb?'block':''):'none');
+document.querySelectorAll('section').forEach(s=>s.style.display=[...s.querySelectorAll('article')].some(a=>a.style.display!=='none')?'':'none');
+document.querySelectorAll('.showmore').forEach(b=>b.style.display=fb?'none':'')}}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));fb=b.dataset.b;apply()}});
-ang.onchange=()=>{{fa=ang.value;apply()}};
 document.querySelectorAll('.showmore').forEach(b=>b.onclick=()=>{{b.closest('section').classList.add('open');b.remove()}});
 const lb=document.getElementById('lb');document.querySelectorAll('.snap img').forEach(i=>i.onclick=()=>{{lb.querySelector('img').src=i.src;lb.style.display='flex'}});
 lb.onclick=()=>lb.style.display='none';document.onkeydown=e=>{{if(e.key==='Escape')lb.style.display='none'}};
@@ -517,7 +444,7 @@ def import_export(path, brand, own_names, today):
     One ad per creative: ads from the same advertiser with the same copy, format and card
     count are one creative shown under several Library IDs. The draft keeps the longest-running
     ID, the widest dates and the largest creative count, and lists the other IDs in the note.
-    The agent fills in type (the look, from the snapshot), angle (from the copy), owner where the guess is wrong, and the image paths.
+    The agent fills in type (the look, judged from the snapshot), owner where the guess is wrong, and the image paths.
     """
     text = open(path, encoding="utf-8").read()
     if path.endswith(".json"):
@@ -538,7 +465,7 @@ def import_export(path, brand, own_names, today):
         # only videos and carousels are folded together here; build.py still merges exact image matches
         key = (adv.lower(), norm(body), fmt, media) if fmt != "image" else (lid,)
         ad = {"id": lid, "brand": brand, "advertiser": adv, "page_id": pid,
-              "owner": "own" if adv.lower() in own else "other", "type": "", "angle": "", "status": status,
+              "owner": "own" if adv.lower() in own else "other", "type": "", "status": status,
               "start": start, "end": end, "days": int(days), "creatives": int(n or 1), "versions": ver == "1",
               "format": fmt, "media": int(media or 1), "video_sec": vsec, "eu_flag": eu == "1", "body": body, "image": ""}
         g = groups.get(key)
@@ -632,8 +559,6 @@ def main():
             run = json.load(f)
         today, a, u, s = merge(out, run, rows, types_log, runs_log)
         print(f"{rp}: {a} added, {u} updated, {s} skipped (under {MIN_DAYS} days)")
-    for r in rows:
-        r["_ft"] = first_tile_hash(os.path.join(out, r["image"])) if r.get("image") else ""
     rescore(rows, today)
     rows.sort(key=lambda r: (r.get("type", ""), -int(r["score"])))
     write_tsv(tsv, rows, COLS)

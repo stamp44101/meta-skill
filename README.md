@@ -43,7 +43,7 @@ What the skill does today and where the data stops. Every number here was checke
 
 ## Page
 
-Ads are grouped by look (how they were shot, judged from the pictures), not by caption; the caption's angle is a tag and a filter. Brand × look table first (ads · best score), then a brand × country table (kept ads seen per market), then each look with a one-line stat (format mix, video length, median run, still running) and what the look is, in facts, from `meta-sher/group-notes.tsv` (edit it by hand or ask Claude; rebuild to show), then the ads. Each brand shows its best 4 per look; the rest sit behind "show more". Flags: ads that ended with 5+ others from the same brand within 3 days and ads sharing copy with others (different pictures).
+Ads are grouped by look (how they were shot, judged from the pictures), not by caption. A brand × look count table first, then a brand × country table (kept ads seen per market), then each look with one line on what puts an ad in it (`meta-sher/group-notes.tsv`) and its ads ranked by score; the first 12 show, the rest are behind "show all". The version with a caption "angle" filter is kept on branch `legacy-v0.4-looks-angle`.
 
 ## Research behind it
 

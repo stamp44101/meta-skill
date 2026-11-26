@@ -48,6 +48,9 @@ Same steps as Runs 2–3, merged into the same meta-sher (124 → 220 ads).
 - Four brands kept nothing: every own ad is under 30 days; their 30+ day matches were other businesses sharing the word. The Viery page runs no ads; its 3 kept ads are Shopee affiliate posts (kept as `other`), and the all-country search is ~4,200 Slovak "viery" ads, so the search was narrowed to VN. New type: `customer quote` (RUE de RUE, 2 ads). Group notes rewritten where the new brands made them wrong ("only Bupbes", "one ad only").
 - Found by running it: the extension redacts 16-digit IDs as card numbers, so export writes them as `12345678x…` and import strips the `x`. Import read only the first text part of a batch result (0 ads found); it now joins all parts. Viery's big pages (US, GB, FR, DE: 150–230 unrelated ads) froze tabs at 15 scroll rounds; 10 rounds plus a read-only re-check after the freeze worked, marked `done=false`.
 
+### Strict rebuild — 26 Nov 2026 (v0.5)
+Stamp: move the last version to legacy and give one that follows only his instructions. Legacy kept as artifact "meta-sher — LEGACY" and branch `legacy-v0.4-looks-angle`. Removed because they weren't his: the caption "angle" tag and filter, per-look stat lines, campaign-end and same-copy flags, the 4-per-brand display cap (each look now shows its ads in strict score order), best-score numbers in the count table, and example/stat sentences in the look notes (each note is now only what puts an ad in that look).
+
 ### Regroup — 26 Nov 2026, by look (v0.4)
 Stamp: the caption-based types were the wrong axis; group by how the ad was shot. All 220 grids were looked at on 34 numbered contact sheets and relabelled; the old type is kept as `angle`.
 | Look | Ads | Mostly | Still running |

@@ -1,10 +1,10 @@
 ---
 name: meta-skill
 description: Collect competitors' working Meta ads (Facebook + Instagram) from the Ad Library into one living swipe file per brand (meta-<brand>), scored by how long they ran and how many ads share the creative, grouped by how each ad was shot (its look). Use for Meta ad research, competitor ads, ad swipe files, or "Meta SKILL".
-version: 0.4
+version: 0.5
 ---
 
-# Meta SKILL — v0.4
+# Meta SKILL — v0.5
 
 Collects competitors' ads that kept running on Facebook and Instagram, as references for our Social Ads GTM. Every run adds to one living file and never replaces it.
 
@@ -64,7 +64,7 @@ python3 -I scripts/build.py trim <saved file> meta-<brand>/images/<id>.png
 
 `grid` lays every carousel card, or 6 frames across a video (one frame per card in a video carousel), in one row on a dark layer and reads the video length. Run it on the search page when it holds under ~100 cards. For big searches open the single-ad page `https://www.facebook.com/ads/library/?id=<id>`, `eval(window.name)`, then `grid`; if that page shows another ad of the same group (`ad not on page`), grid it from the search page. Batch about 6 ads (grid + zoom) per `browser_batch` and trim them right after, in order; saved captures can come back out of order, so before building run `python3 -I scripts/build.py check-images meta-<brand>` and swap any file whose caption shows another ad's ID. Check each grid as it comes back: the picture is what decides the look.
 
-### 4. Label every kept ad: look first, angle second
+### 4. Label every kept ad by its look
 
 `type` is the **look**: how the ad was produced, judged by looking at its snapshot grid, never from the caption. Format (carousel or video) and the place itself (café, beach, bedroom) don't decide it; how produced it is does. The SHER file uses five, from most controlled to most raw:
 
@@ -79,13 +79,12 @@ Tie-breaks, so the same picture gets the same look every run:
 - a bare room with a chair, curtain or wallpaper and plain posing → studio
 - a try-on presented to camera or a mirror selfie → casual, however nice the room
 
-A carousel or video that mixes looks goes where most of its frames sit. To label many ads, stack the grids into numbered contact sheets and look at them in batches. Reuse these looks; if a new one is needed, merge or split, log it in `types_log` with the reason (build.py keeps any `type` that is not an existing look as the angle instead). `reangle` in the run fixes a wrong angle.
+A carousel or video that mixes looks goes where most of its frames sit. To label many ads, stack the grids into numbered contact sheets and look at them in batches. Reuse these looks; if a new one is needed, merge or split, log it in `types_log` with the reason (build.py leaves any `type` that is not an existing look empty and warns).
 
-`angle` is what the copy sells, read from the caption: single piece spotlight, new drop or collection, styled look, mood (no product named), catalogue product cards, creator-fronted, customer quote, discount or code, someone else's ad naming the brand. It shows as a tag on each card and as a filter, not as a group.
 
 ### 5. Write the run and build
 
-Fill `type` (look), `angle` and `image` in the draft, add `searches` (brand, how, found, kept, note) and `types_log`, save it as `meta-<brand>/runs/<date>-<brand>.json` (shape in the `build.py` docstring; `retype` moves ads already in the file to another look), then:
+Fill `type` (the look) and `image` in the draft, add `searches` (brand, how, found, kept, note) and `types_log`, save it as `meta-<brand>/runs/<date>-<brand>.json` (shape in the `build.py` docstring; `retype` moves ads already in the file to another look), then:
 
 ```
 python3 -I scripts/build.py meta-<brand> meta-<brand>/runs/<file>.json
@@ -110,7 +109,7 @@ python3 -I scripts/build.py meta-<brand> meta-<brand>/runs/<file>.json
 | `meta-<brand>.html` | Rebuilt every run; opens on its own |
 
 **Score** = days + 5 per extra ad using the creative (up to 10) + 10 for "multiple versions" + EU reach bonus (10 at 10k, 20 at 100k). An active ad counts days up to the day it was last seen live.
-Ads are ranked by score inside each look; looks are listed by size. Each brand shows its best 4 ads per look.
+Ads are ranked by score inside each look; looks are listed by size. Each look shows its first 12 ads; the rest are one tap away.
 
 After a run that adds ads or changes looks, update `group-notes.tsv` (type, takeaway, updated): what the look is, in facts from the page, in two sentences. No advice or verdicts.
 
