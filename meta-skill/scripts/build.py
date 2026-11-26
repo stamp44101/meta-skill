@@ -23,7 +23,7 @@ run.json (written by the agent during a run):
   "searches": [{"brand": "Bupbes", "how": "page 1234 | phrase \\"bupbes\\"", "found": 830, "kept": 41, "note": ""}],
   "ads": [{"id": "...", "brand": "Bupbes", "advertiser": "Bupbes", "page_id": "...", "owner": "own|other",
            "type": "polished lookbook", "status": "active|ended", "start": "YYYY-MM-DD", "end": "",
-           "creatives": 2, "versions": false, "format": "video", "media": 1, "video_sec": 13,
+           "creatives": 2, "versions": false, "format": "video", "media": 1,
            "eu_reach": "", "countries": "", "body": "...", "cta": "", "image": "images/<id>.png", "note": ""}],
   "types_log": [{"action": "new|merge|split|rename", "from": "a, b", "to": "c", "reason": "..."}],
   "retype": {"<id>": "<look>"}
@@ -38,7 +38,7 @@ import base64, csv, io, json, math, os, sys
 from datetime import date
 
 COLS = ["library_id", "brand", "advertiser", "page_id", "owner", "type", "status", "start", "end",
-        "days", "creatives", "versions", "format", "media", "video_sec", "eu_reach", "countries",
+        "days", "creatives", "versions", "format", "media", "eu_reach", "countries",
         "score", "body", "cta", "image", "creative_hash", "first_seen", "last_seen", "note"]
 MIN_DAYS = 30        # the brief: ads live under 30 days are never saved
 PER_CREATIVE = 5     # points for every extra ad using the same creative (kept small: copies are cheap)
@@ -144,7 +144,7 @@ def merge(out, run, rows, types_log, runs_log):
             else:
                 hit["end"] = max(hit.get("end") or "", a.get("end") or "")
             hit["creatives"] = max(int(hit.get("creatives") or 1), int(a.get("creatives") or 1))
-            for k in ("eu_reach", "countries", "video_sec"):
+            for k in ("eu_reach", "countries"):
                 hit[k] = hit.get(k) or a.get(k, "")
             hit["last_seen"] = today.isoformat()
             updated += 1
@@ -200,10 +200,23 @@ def rank(rows):
     return ranked
 
 
+def tiles_top(im):
+    """Height of the ID caption strip at the top of a grid capture (kept in images/ for check-images,
+    left out of the page)."""
+    g = im.convert("L"); w, h = g.size; px = g.load(); bg = px[w - 1, h - 1]
+    busy = lambda y: any(abs(px[x, y] - bg) > 40 for x in range(0, w, 2))
+    y = 0
+    while y < h and not busy(y): y += 1      # margin
+    while y < h and busy(y): y += 1          # caption text
+    while y < h and not busy(y): y += 1      # gap above the tiles
+    return y if y < h * 0.4 else 0
+
+
 def thumb(path, h=360):
     try:
         from PIL import Image
         im = Image.open(path).convert("RGB")
+        im = im.crop((0, tiles_top(im), im.width, im.height))
         if im.height > h:
             im = im.resize((round(im.width * h / im.height), h))
         buf = io.BytesIO()
@@ -368,7 +381,8 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
                    f'<td>{esc(s.get("found"))}</td><td>{esc(s.get("kept"))}</td><td>{esc(s.get("under_30", ""))}</td><td>{esc(s.get("note"))}</td></tr>' for s in runs_log[::-1])
     tlog = "".join(f'<tr><td>{esc(e.get("date"))}</td><td>{esc(e.get("action"))}</td><td>{esc(e.get("from"))}</td>'
                    f'<td>{esc(e.get("to"))}</td><td>{esc(e.get("reason"))}</td></tr>' for e in types_log[::-1])
-    cut = [(x.get("brand"), x.get("under_30")) for x in runs_log if x.get("under_30")]
+    latest = {x.get("brand"): x.get("under_30") for x in runs_log if x.get("under_30")}  # each brand once, its latest search
+    cut = list(latest.items())
     cut_line = (" (left out: " + ", ".join(f"{b} {n}" for b, n in cut) + ")") if cut else ""
     eu_n = sum(1 for r in rows if r.get("eu_reach"))
     eu_max = max([int(float(r["eu_reach"])) for r in rows if r.get("eu_reach")] or [0])
@@ -443,9 +457,9 @@ def import_export(path, brand, own_names, today):
     groups = {}
     for line in text.split("\n")[1:]:
         f = [x.strip() for x in line.split("¦")]
-        if len(f) < 14:
+        if len(f) < 13:
             continue
-        lid, adv, pid, status, start, end, days, n, ver, fmt, media, vsec, eu, body = f[:14]
+        lid, adv, pid, status, start, end, days, n, ver, fmt, media, eu, body = f[:13]
         lid, pid = lid.replace("x", ""), pid.replace("x", "")  # adlib.js writes 12345678x9... so IDs are not redacted
         if not lid.isdigit():
             print(f"skipped line, ID unreadable: {line[:60]}", file=sys.stderr)
@@ -456,7 +470,7 @@ def import_export(path, brand, own_names, today):
         ad = {"id": lid, "brand": brand, "advertiser": adv, "page_id": pid,
               "owner": "own" if adv.lower() in own else "other", "type": "", "status": status,
               "start": start, "end": end, "days": int(days), "creatives": int(n or 1), "versions": ver == "1",
-              "format": fmt, "media": int(media or 1), "video_sec": vsec, "eu_flag": eu == "1", "body": body, "image": ""}
+              "format": fmt, "media": int(media or 1), "eu_flag": eu == "1", "body": body, "image": ""}
         g = groups.get(key)
         if not g:
             groups[key] = dict(ad, also=[])

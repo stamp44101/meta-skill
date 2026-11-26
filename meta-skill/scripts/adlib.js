@@ -51,7 +51,7 @@
     const cta = lines.find(l => /^(Shop now|Learn more|Send message|Order now|Sign up|Book now|Get offer|Send WhatsApp message|Contact us|See menu|Watch more)$/.test(l)) || '';
     return { id, status: /^​?\s*Active/.test(t.trim()) || /\nActive\n/.test('\n' + t) ? 'active' : 'ended',
       start, end, advertiser: si > 0 ? lines[si - 1] : '', page_id: pageLink || '',
-      creatives: n, versions: /multiple versions/.test(t), format, media, video_sec: lens.length ? Math.max(...lens) : '',
+      creatives: n, versions: /multiple versions/.test(t), format, media,
       eu_flag: /EU transparency/.test(t), body: body.join(' ').slice(0, 400), cta };
   }
 
@@ -132,13 +132,11 @@
         const i = new Image(); i.src = img.currentSrc || img.src; tiles.push(i);
       }
       await Promise.all(tiles.map(t => t.decode().catch(() => {})));
-      let dur = '';
       for (const v of [...c.querySelectorAll('video')].slice(0, 10)) {
         const src = v.currentSrc || v.src; if (!src) continue;
         const blob = await (await fetch(src)).blob();
         const pv = document.createElement('video'); pv.muted = true; pv.src = URL.createObjectURL(blob);
         await new Promise(r => { pv.onloadeddata = r; setTimeout(r, 8000); });
-        dur = dur || Math.round(pv.duration);
         const k = c.querySelectorAll('video').length > 1 ? 1 : frames; // carousel of videos: one frame per card
         for (let f = 0; f < k; f++) {
           pv.currentTime = pv.duration * (k === 1 ? 0.3 : (f + 0.5) / k);
@@ -157,7 +155,7 @@
       const g = document.createElement('div'); g.id = '__ma_grid';
       g.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#111;padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;align-items:flex-start';
       const cap = document.createElement('div');
-      cap.textContent = (label || id) + (dur ? '  ·  video ' + dur + 's' : '') + '  ·  ' + tiles.length + ' tiles';
+      cap.textContent = label || id;
       cap.style.cssText = 'flex-basis:100%;color:#ddd;font:13px system-ui;padding:0 2px 4px';
       g.appendChild(cap); tiles.forEach(t => g.appendChild(t)); document.body.appendChild(g);
       await sleep(900);
@@ -167,7 +165,7 @@
       const last = tiles[tiles.length - 1].getBoundingClientRect();
       const rows = new Set(tiles.map(t => Math.round(t.getBoundingClientRect().top))).size;
       // zoom region: top 35% of the frame height (one row); full frame if rows > 1
-      return JSON.stringify({ tiles: tiles.length, rows, video_sec: dur, cut: last.bottom > innerHeight });
+      return JSON.stringify({ tiles: tiles.length, rows, cut: last.bottom > innerHeight });
     },
     clearGrid() { document.getElementById('__ma_grid')?.remove(); return 'ok'; },
     // Tool results are cut off past ~1,500 characters, so bulk data goes out through the page:
@@ -175,7 +173,7 @@
     // by " ¦ ", since page text turns tabs into spaces) in a full-page <article>, hides the rest,
     // and pads it past 50 KB so get_page_text saves it to a file instead of printing it.
     // Read that file with build.py import, then clearOut() to restore the page.
-    // Fields: id advertiser page_id status start end days creatives versions format media video_sec eu body
+    // Fields: id advertiser page_id status start end days creatives versions format media eu body
     export(minDays = 30, today = new Date().toISOString().slice(0, 10)) {
       this.clearOut();
       const T = Date.parse(today), out = [];
@@ -187,7 +185,7 @@
         // IDs go out as 12345678x9012345: the extension redacts digit runs that look like card numbers
         const unredact = v => String(v).replace(/^(\d{8})(\d)/, '$1x$2');
         out.push([unredact(p.id), p.advertiser, unredact(p.page_id), p.status, p.start, p.end, days, p.creatives, p.versions ? 1 : 0,
-          p.format, p.media, p.video_sec, p.eu_flag ? 1 : 0, p.body.replace(/\s+/g, ' ').replace(/¦/g, '|').slice(0, 220)].join(' ¦ '));
+          p.format, p.media, p.eu_flag ? 1 : 0, p.body.replace(/\s+/g, ' ').replace(/¦/g, '|').slice(0, 220)].join(' ¦ '));
       }
       const art = document.createElement('article'); art.id = '__ma_out';
       const pre = document.createElement('pre'); pre.style.cssText = 'white-space:pre-wrap;font:11px monospace';
