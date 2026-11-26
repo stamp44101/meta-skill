@@ -361,7 +361,7 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
                     (f'seen in {r["countries"]} (of {len(checked.get(r["brand"], ()))} countries checked)' if r.get("countries") else
                      f'not seen in the {len(checked[r["brand"]])} countries checked' if r["brand"] in checked else "")]
             cards.append(
-                f'<article data-brand="{esc(r["brand"])}"{" class=more" if extra else ""}><div class="snap">{img}</div><div class="info">'
+                f'<article{" class=more" if extra else ""}><div class="snap">{img}</div><div class="info">'
                 f'<div class="top"><span class="rank">#{i}</span><b>{esc(r["brand"])}</b>'
                 f'<span class="tag {esc(r.get("owner", ""))}">{"own ad" if r.get("owner") == "own" else "by " + esc(r.get("advertiser", ""))}</span>'
                 f'<span class="score">{r["score"]}</span></div>'
@@ -374,7 +374,7 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
         note = f'<div class="note"><p>{esc(nt["takeaway"])}</p></div>' if nt.get("takeaway") else ""
         more = f'<button class="showmore">show all {len(ads)}</button>' if hidden else ""
         parts.append(f'<section><h2>{esc(t)}<small>'
-                     f'{len(ads)} ads · {len(gbrands)} brand{"s" if len(gbrands) > 1 else ""}: {esc(", ".join(gbrands))}</small></h2>'
+                     f'{len(ads)} ads</small></h2>'
                      f'{note}'
                      f'<div class="grid">{"".join(cards)}</div>{more}</section>')
     runs = "".join(f'<tr><td>{esc(s.get("date"))}</td><td>{esc(s.get("brand"))}</td><td>{esc(s.get("how"))}</td>'
@@ -386,15 +386,12 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
     cut_line = (" (left out: " + ", ".join(f"{b} {n}" for b, n in cut) + ")") if cut else ""
     eu_n = sum(1 for r in rows if r.get("eu_reach"))
     eu_max = max([int(float(r["eu_reach"])) for r in rows if r.get("eu_reach")] or [0])
-    chips = "".join(f'<button data-b="{esc(b)}">{esc(b)}</button>' for b in brands)
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(name)} — competitor Meta ads</title><style>
 :root{{--bg:#faf9f7;--fg:#1d1b19;--mute:#77716b;--line:#e6e1da;--card:#fff;--acc:#8a2b3a}}
 @media(prefers-color-scheme:dark){{:root{{--bg:#151413;--fg:#eee9e3;--mute:#9c958e;--line:#2c2926;--card:#1e1c1a;--acc:#e48a99}}}}
 *{{box-sizing:border-box}}body{{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}}
 header{{padding:28px 24px 8px;max-width:1400px;margin:auto}}h1{{margin:0 0 4px;font-size:24px}}header p{{margin:0;color:var(--mute)}}
-nav{{position:sticky;top:0;background:var(--bg);padding:10px 24px;border-bottom:1px solid var(--line);z-index:2;display:flex;gap:6px;flex-wrap:wrap}}
-nav button{{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:99px;padding:4px 12px;cursor:pointer}}nav button.on{{background:var(--fg);color:var(--bg)}}
 main{{max-width:1400px;margin:auto;padding:0 24px 40px}}h2{{font-size:18px;margin:28px 0 10px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}}
 h2 small{{font-weight:400;color:var(--mute);font-size:13px}}.rank{{color:var(--acc);font-weight:700}}
 .grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(420px,100%),1fr));gap:14px}}.scroll{{overflow-x:auto;-webkit-overflow-scrolling:touch}}*{{min-width:0}}body{{overflow-x:clip}}
@@ -402,31 +399,25 @@ article{{background:var(--card);border:1px solid var(--line);border-radius:10px;
 .snap{{background:#111;overflow-x:auto}}.snap img{{display:block;height:220px;width:auto;cursor:zoom-in}}.noimg{{color:#888;padding:40px;text-align:center}}
 .info{{padding:10px 12px}}.top{{display:flex;gap:8px;align-items:center}}.score{{margin-left:auto;font-weight:700}}
 .tag{{font-size:12px;color:var(--mute);border:1px solid var(--line);border-radius:4px;padding:0 6px}}.tag.other{{color:var(--acc);border-color:var(--acc)}}
-.meta{{color:var(--mute);font-size:12.5px;margin:4px 0}}article p{{margin:6px 0;font-size:13px;max-height:5.8em;overflow:hidden}}a{{color:var(--acc)}}
+.meta{{color:var(--mute);font-size:12.5px;margin:4px 0}}article p{{margin:6px 0;font-size:13px}}a{{color:var(--acc)}}
 details{{margin-top:30px}}table{{border-collapse:collapse;width:100%;font-size:13px}}td,th{{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top}}
 .stats{{color:var(--mute);font-size:13px;margin:-4px 0 8px}}.note{{background:var(--card);border-left:3px solid var(--acc);padding:6px 12px;margin:0 0 12px;border-radius:4px}}.note p{{margin:4px 0}}
 header details{{margin:6px 0 0}}header details p{{margin:4px 0 0}}article.more{{display:none}}section.open article.more{{display:block}}
 .showmore{{margin:10px 0;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:6px;padding:5px 12px;cursor:pointer}}
 .mx{{width:auto;margin:14px 0 4px}}.mx td,.mx th{{padding:4px 10px}}.mx td{{text-align:center}}.mx td small{{color:var(--mute)}}.mx .nil{{color:var(--line)}}
 :root[data-theme=dark]{{--bg:#151413;--fg:#eee9e3;--mute:#9c958e;--line:#2c2926;--card:#1e1c1a;--acc:#e48a99}}:root[data-theme=light]{{--bg:#faf9f7;--fg:#1d1b19;--mute:#77716b;--line:#e6e1da;--card:#fff;--acc:#8a2b3a}}
-@media(max-width:600px){{header{{padding:18px 14px 6px}}header p{{font-size:13px}}main{{padding:0 14px 32px}}nav{{padding:8px 14px;flex-wrap:nowrap;overflow-x:auto}}nav button{{flex:none;min-height:36px}}.snap img{{height:170px}}.mx{{font-size:12.5px}}.mx td,.mx th{{padding:4px 6px;white-space:nowrap}}h2{{font-size:16px}}.showmore{{min-height:44px;width:100%}}}}
+@media(max-width:600px){{header{{padding:18px 14px 6px}}header p{{font-size:13px}}main{{padding:0 14px 32px}}.snap img{{height:170px}}h2{{font-size:16px}}.showmore{{min-height:44px;width:100%}}}}
 #lb{{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:9}}#lb img{{max-width:96vw;max-height:94vh}}
 </style></head><body>
 <header><h1>{esc(name)} — competitor Meta ads that kept running</h1>
 <p>Grouped by how each ad was shot, judged from the pictures, not by what the caption says. Inside each group, ads are ranked by score. {len(rows)} ads · {len(ranked)} groups · rebuilt {today.isoformat()}.</p>
 <details><summary>How ads are kept and scored</summary><p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days + {PER_CREATIVE} per extra ad using the creative (counted up to {CREATIVE_CAP} ads, so at most {PER_CREATIVE * CREATIVE_CAP} points) + 10 for multiple versions + EU reach bonus (10 at 10,000 people reached in the EU, 20 at 100,000; {eu_n} of {len(rows)} ads have EU reach{f", the highest {eu_max:,}" if eu_n else ""}).
 Ads still running count days up to the day they were last seen live. Where an ad ran: each brand's search is repeated with the Ad Library country filter, one country at a time (every check is in geo-log.tsv); "not seen" means the filter did not show it in any country checked. Ads under {MIN_DAYS} days are left out{cut_line}.</p></details></header>
-<nav><button class="on" data-b="">All brands</button>{chips}</nav>
 <main>{"".join(parts) or "<p>No ads kept yet.</p>"}
 <details><summary>Searches ({len(runs_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Brand</th><th>How</th><th>Loaded</th><th>Kept</th><th>Left out, under {MIN_DAYS} days</th><th>Note</th></tr>{runs}</table></div></details>
 <details><summary>Group changes ({len(types_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Action</th><th>From</th><th>To</th><th>Reason</th></tr>{tlog}</table></div></details>
 </main><div id="lb"><img alt=""></div>
 <script>
-let fb='';
-function apply(){{document.querySelectorAll('article').forEach(a=>a.style.display=!fb||a.dataset.brand===fb?(fb?'block':''):'none');
-document.querySelectorAll('section').forEach(s=>s.style.display=[...s.querySelectorAll('article')].some(a=>a.style.display!=='none')?'':'none');
-document.querySelectorAll('.showmore').forEach(b=>b.style.display=fb?'none':'')}}
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));fb=b.dataset.b;apply()}});
 document.querySelectorAll('.showmore').forEach(b=>b.onclick=()=>{{b.closest('section').classList.add('open');b.remove()}});
 const lb=document.getElementById('lb');document.querySelectorAll('.snap img').forEach(i=>i.onclick=()=>{{lb.querySelector('img').src=i.src;lb.style.display='flex'}});
 lb.onclick=()=>lb.style.display='none';document.onkeydown=e=>{{if(e.key==='Escape')lb.style.display='none'}};
