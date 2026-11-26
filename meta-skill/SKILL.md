@@ -8,7 +8,7 @@ version: 0.4
 
 Collects competitors' ads that kept running on Facebook and Instagram, as references for our Social Ads GTM. Every run adds to one living file and never replaces it.
 
-Facts only. Running long means the brand kept paying, not proof it sold: write it that way. Reply in the user's language (casual Thai by default), technical terms in English.
+Facts only. Reply in the user's language (casual Thai by default), technical terms in English.
 
 ## Run in Chat
 
@@ -66,21 +66,18 @@ python3 -I scripts/build.py trim <saved file> meta-<brand>/images/<id>.png
 
 ### 4. Label every kept ad: look first, angle second
 
-`type` is the **look**: how the ad was shot, judged by looking at its snapshot grid, never from the caption. Format (carousel or video) and the place itself (café, beach) don't decide it; how produced it is does. The SHER file uses six:
+`type` is the **look**: how the ad was produced, judged by looking at its snapshot grid, never from the caption. Format (carousel or video) and the place itself (café, beach, bedroom) don't decide it; how produced it is does. The SHER file uses five, from most controlled to most raw:
 
-- **studio, minimal**: plain backdrop or a bare room, controlled light, the garment is the subject
-- **product only, no model**: packshots, hanger shots, flat-lays, a hand opening the box
-- **editorial**: a concept shoot, a built set or a dramatic place, styled like a magazine
-- **on location, polished**: a photographer in a real place, natural poses, no concept
-- **casual, phone-shot**: looks self-filmed: mirror selfies, try-ons talking to camera, snapshots
-- **graphic layout**: text-led designs, not a shoot
+- **studio, minimal**: plain backdrop, white cut-out or a bare room, controlled light; the garment is the subject (packshots on white count here)
+- **editorial**: a styled, magazine-like shoot with a concept, set, props, theatrical light or a dramatic place; the same production stays editorial whatever room or field it moves to
+- **polished lookbook**: a photographer, natural light, real place, natural poses, no concept
+- **casual, phone-shot**: looks self-made: mirror selfies, try-ons presented to camera, handheld unboxing or flat-lays on a bed, snapshots
+- **graphic layout**: a designed card or collage led by text or annotations, not a shoot
 
 Tie-breaks, so the same picture gets the same look every run:
+- judge one brand's shoot as a whole: if its outdoor and indoor sets share the same styling and lighting, they share one look
 - a bare room with a chair, curtain or wallpaper and plain posing → studio
-- a concept, props, a built set or theatrical light (even indoors) → editorial; so is a wild place: forest, river, sea rocks, an open field
-- a hotel or villa room, balcony, courtyard, staircase or street with natural posing → on location, even with a sea view
 - a try-on presented to camera or a mirror selfie → casual, however nice the room
-- no person in most frames → product only
 
 A carousel or video that mixes looks goes where most of its frames sit. To label many ads, stack the grids into numbered contact sheets and look at them in batches. Reuse these looks; if a new one is needed, merge or split, log it in `types_log` with the reason (build.py keeps any `type` that is not an existing look as the angle instead). `reangle` in the run fixes a wrong angle.
 
@@ -108,14 +105,14 @@ python3 -I scripts/build.py meta-<brand> meta-<brand>/runs/<file>.json
 | `runs-log.tsv` | Every brand search: date, how, found, kept, note (brands with no ads get a row too) |
 | `geo-log.tsv` | Every per-country check: brand, country, results, cards loaded, kept ads seen |
 | `geo-ids.json` | The ID order the last SET line used (CHECK returns indexes into it) |
-| `group-notes.tsv` | Per look: what it is and what SHER should test |
+| `group-notes.tsv` | Per look: what it is, in facts from the page |
 | `runs/*.json` | Each run's raw input |
 | `meta-<brand>.html` | Rebuilt every run; opens on its own |
 
-**Score** = days (up to 180) + 5 per extra ad using the creative (up to 10) + 10 for "multiple versions" + EU reach bonus (10 at 10k, 20 at 100k). An active ad counts days up to the day it was last seen live.
-**Group rank** = average of the best ad of each of its top 3 brands + 20 per extra brand running that look. Each brand shows its best 4 ads per group.
+**Score** = days + 5 per extra ad using the creative (up to 10) + 10 for "multiple versions" + EU reach bonus (10 at 10k, 20 at 100k). An active ad counts days up to the day it was last seen live.
+Ads are ranked by score inside each look; looks are listed by size. Each brand shows its best 4 ads per look.
 
-After a run that adds ads or changes looks, update `group-notes.tsv` (type, takeaway, sher_test, updated): what the look is in facts from the page, and one thing SHER should test. Keep both to two sentences.
+After a run that adds ads or changes looks, update `group-notes.tsv` (type, takeaway, updated): what the look is, in facts from the page, in two sentences. No advice or verdicts.
 
 Send the HTML with one line per brand (found → kept), and any looks merged or split.
 
@@ -123,4 +120,4 @@ Send the HTML with one line per brand (found → kept), and any looks merged or 
 
 - A re-run updates dates, status and score of ads already in the file; it never adds them twice. An ad that stopped stays in, marked ended.
 - Re-run a brand when the user asks, or when new ads have had 30 days to prove themselves.
-- Open questions are tracked in `README.md` → Open for discuss. Don't change those rules without the user.
+- Known limits are listed in `README.md` → Known limits. Don't change the brief's rules without the user.

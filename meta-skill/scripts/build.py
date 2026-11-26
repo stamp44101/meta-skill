@@ -11,7 +11,7 @@
 <out_dir> is meta-<brand>/ (e.g. meta-sher/). It holds:
     meta-<brand>.tsv   one row per kept ad, keyed by Library ID (the memory)
     types-log.tsv      every new look (group), merge, split, rename and regroup, with the reason
-    group-notes.tsv    one note per look: what it is, SHER test
+    group-notes.tsv    one note per look: what it is, in facts from the page
     runs-log.tsv       every brand search: when, how, found, kept
     geo-log.tsv        every per-country check: brand, country, results, cards loaded, kept ads seen
     images/<id>.png    one snapshot grid per ad
@@ -22,7 +22,7 @@ run.json (written by the agent during a run):
   "date": "2026-11-25",
   "searches": [{"brand": "Bupbes", "how": "page 1234 | phrase \\"bupbes\\"", "found": 830, "kept": 41, "note": ""}],
   "ads": [{"id": "...", "brand": "Bupbes", "advertiser": "Bupbes", "page_id": "...", "owner": "own|other",
-           "type": "on location, polished", "angle": "single piece spotlight", "status": "active|ended", "start": "YYYY-MM-DD", "end": "",
+           "type": "polished lookbook", "angle": "single piece spotlight", "status": "active|ended", "start": "YYYY-MM-DD", "end": "",
            "creatives": 2, "versions": false, "format": "video", "media": 1, "video_sec": 13,
            "eu_reach": "", "countries": "", "body": "...", "cta": "", "image": "images/<id>.png", "note": ""}],
   "types_log": [{"action": "new|merge|split|rename", "from": "a, b", "to": "c", "reason": "..."}],
@@ -42,15 +42,12 @@ COLS = ["library_id", "brand", "advertiser", "page_id", "owner", "type", "angle"
         "days", "creatives", "versions", "format", "media", "video_sec", "eu_reach", "countries",
         "score", "body", "cta", "image", "creative_hash", "first_seen", "last_seen", "note"]
 MIN_DAYS = 30        # decision 2: newer ads are never saved
-DAY_CAP = 180        # days count up to this
 PER_CREATIVE = 5     # points for every extra ad using the same creative (kept small: copies are cheap)
 CREATIVE_CAP = 10    # ...counted up to 10 extra ads
-TOP_N = 3            # a group is scored on the best ad of each of its top N brands
 SHOW_PER_BRAND = 4   # a group shows each brand's best 4 ads; the rest sit behind "show more"
-FLIGHT_MIN = 5       # this many ads from one brand ending within FLIGHT_DAYS of each other = a campaign end, flagged
+FLIGHT_MIN = 5       # this many ads from one brand ending within FLIGHT_DAYS of each other get a note saying so
 FLIGHT_DAYS = 3
-PER_BRAND = 20       # points for every extra brand running the type
-# markets checked one by one with the Ad Library country filter (README: Open for discuss 4)
+# markets checked one by one with the Ad Library country filter (README: Known limits 4)
 MARKETS = "TH VN SG MY ID PH HK TW KR JP AU NZ US CA GB IN AE KH FR DE".split()
 GL = ["date", "brand", "country", "results", "cards", "complete", "seen"]
 
@@ -124,7 +121,7 @@ def eu_points(reach):
 
 def score(r):
     extra = min(max(int(r.get("creatives") or 1) - 1, 0), CREATIVE_CAP)
-    return (min(int(r["days"]), DAY_CAP) + PER_CREATIVE * extra
+    return (int(r["days"]) + PER_CREATIVE * extra
             + (10 if str(r.get("versions")).lower() in ("true", "1", "yes") else 0) + eu_points(r.get("eu_reach")))
 
 
@@ -223,8 +220,7 @@ def rescore(rows, today):
             near = [x for x in ended if x["brand"] == r["brand"] and abs((_d.fromisoformat(x["end"]) - e).days) <= FLIGHT_DAYS]
             if len(near) >= FLIGHT_MIN:
                 lo = min(x["end"] for x in near); hi = max(x["end"] for x in near)
-                r["_flight"] = (f"ended with {len(near) - 1} other {r['brand']} ads between {lo} and {hi} "
-                                "(a campaign end, not a verdict on this ad)")
+                r["_flight"] = f"ended with {len(near) - 1} other {r['brand']} ads between {lo} and {hi}"
         same = [x for x in rows if x is not r and x["brand"] == r["brand"] and norm(x.get("body", "")) == norm(r.get("body", "")) and norm(r.get("body", ""))]
         if same:
             twin = sum(1 for x in same if hamming(x.get("_ft", ""), r.get("_ft", "")) <= 3)
@@ -245,15 +241,9 @@ def rank(rows):
         groups.setdefault(r.get("type") or "untyped", []).append(r)
     ranked = []
     for t, ads in groups.items():
-        ads.sort(key=lambda r: -int(r["score"]))
-        best = {}
-        for r in ads:  # each brand's best ad, so one big brand can't carry a look alone
-            best.setdefault(r["brand"], int(r["score"]))
-        top = sorted(best.values(), reverse=True)[:TOP_N]
-        brands = sorted(best)
-        gscore = round(sum(top) / len(top) + PER_BRAND * (len(brands) - 1))
-        ranked.append((gscore, t, brands, ads))
-    ranked.sort(key=lambda g: -g[0])
+        ads.sort(key=lambda r: -int(r["score"]))  # ads are ranked by score inside each look
+        ranked.append((0, t, sorted({r["brand"] for r in ads}), ads))
+    ranked.sort(key=lambda g: -len(g[3]))  # looks are listed by size, not scored against each other
     return ranked
 
 
@@ -400,11 +390,14 @@ def markets_table(out, rows, brands):
 
 def html(out, name, rows, types_log, runs_log, today, notes=None):
     notes = notes or {}
+    checked = {}
+    for e in read_tsv(os.path.join(out, "geo-log.tsv"), GL):
+        checked.setdefault(e["brand"], set()).add(e["country"])
     ranked = rank(rows)
     brands = sorted({r["brand"] for r in rows})
     # brand x type matrix: count / best score
     mrows = []
-    for gscore, t, gbrands, ads in ranked:
+    for _, t, gbrands, ads in ranked:
         cells = []
         for b in brands:
             mine = [int(r["score"]) for r in ads if r["brand"] == b]
@@ -414,7 +407,7 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
     matrix = (f'<div class="scroll"><table class="mx"><tr><th>look \\ brand: ads · best score</th>{"".join(f"<th>{esc(b)}</th>" for b in brands)}</tr>'
               f'{"".join(mrows)}<tr><th>all</th>{totals}</tr></table></div>')
     parts = []
-    for gi, (gscore, t, gbrands, ads) in enumerate(ranked, 1):
+    for _, t, gbrands, ads in ranked:
         cards = []
         seen = {}
         for i, r in enumerate(ads, 1):
@@ -426,7 +419,8 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
                     "multiple versions" if r.get("versions") == "yes" else "",
                     r.get("format", "") + (f' · {r["video_sec"]}s' if r.get("video_sec") else ""),
                     f'EU reach {int(float(r["eu_reach"])):,}' if r.get("eu_reach") else "",
-                    ("seen in " + r["countries"]) if r.get("countries") else ""]
+                    ("seen in " + r["countries"]) if r.get("countries") else
+                    (f'not seen in the {len(checked[r["brand"]])} countries checked' if r["brand"] in checked else "")]
             flags = [f for f in (r.get("_flight"), r.get("_copies")) if f]
             angle = f'<div class="angle">{esc(r["angle"])}</div>' if r.get("angle") else ""
             cards.append(
@@ -443,9 +437,9 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
         hidden = sum(1 for c in cards if " class=more" in c)
         nt = notes.get(t, {})
         note = (f'<div class="note"><p><b>What it is:</b> {esc(nt.get("takeaway", ""))}</p>'
-                f'<p><b>SHER test:</b> {esc(nt.get("sher_test", ""))}</p></div>') if nt else ""
+                f'</div>') if nt and nt.get("takeaway") else ""
         more = f'<button class="showmore">show {hidden} more (each brand capped at {SHOW_PER_BRAND})</button>' if hidden else ""
-        parts.append(f'<section><h2><span class="rank">{gi}</span>{esc(t)}<small>group score {gscore} · '
+        parts.append(f'<section><h2>{esc(t)}<small>'
                      f'{len(ads)} ads · {len(gbrands)} brand{"s" if len(gbrands) > 1 else ""}: {esc(", ".join(gbrands))}</small></h2>'
                      f'<div class="stats">{esc(group_stats(ads))}</div>{note}'
                      f'<div class="grid">{"".join(cards)}</div>{more}</section>')
@@ -456,6 +450,7 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
     cut = [(x.get("brand"), x.get("under_30")) for x in runs_log if x.get("under_30")]
     cut_line = (" (left out: " + ", ".join(f"{b} {n}" for b, n in cut) + ")") if cut else ""
     eu_n = sum(1 for r in rows if r.get("eu_reach"))
+    eu_max = max([int(float(r["eu_reach"])) for r in rows if r.get("eu_reach")] or [0])
     chips = "".join(f'<button data-b="{esc(b)}">{esc(b)}</button>' for b in brands)
     from collections import Counter as _C
     angles = "".join(f'<option value="{esc(a)}">{esc(a)} ({n})</option>' for a, n in _C(r.get("angle", "") for r in rows).most_common() if a)
@@ -487,9 +482,9 @@ header details{{margin:6px 0 0}}header details p{{margin:4px 0 0}}article.more{{
 #lb{{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:9}}#lb img{{max-width:96vw;max-height:94vh}}
 </style></head><body>
 <header><h1>{esc(name)} — competitor Meta ads that kept running</h1>
-<p><b>Grouped by the look</b>: how each ad was shot, judged from the pictures (studio, editorial, polished location, casual phone-shot, product only), not by what the caption says. What the copy sells is the small tag on each card; filter by it with the menu. Long runs are a lower bound for ads still running. {len(rows)} ads · {len(ranked)} looks · rebuilt {today.isoformat()}.</p>
-<details><summary>How ads are kept and scored</summary><p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days (up to {DAY_CAP}) + {PER_CREATIVE} per extra ad using the creative (counted up to {CREATIVE_CAP} ads, so at most {PER_CREATIVE * CREATIVE_CAP} points) + 10 for multiple versions + EU reach bonus ({eu_n} of {len(rows)} ads have EU reach data{', so it moves no score yet' if not eu_n else ''}).
-Groups ranked by the best ad of each of their top {TOP_N} brands + {PER_BRAND} per extra brand, so one big brand can't carry a look. Each brand shows its best {SHOW_PER_BRAND} per group. Running long means the brand kept paying, not proof it sold. Short promo ads rarely reach {MIN_DAYS} days, so offers are under-represented here{cut_line}. </p></details></header>
+<p><b>Grouped by the look</b>: how each ad was shot, judged from the pictures (studio, editorial, polished lookbook, casual phone-shot, graphic layout), not by what the caption says. What the copy sells is the small tag on each card; filter by it with the menu. Long runs are a lower bound for ads still running. {len(rows)} ads · {len(ranked)} looks · rebuilt {today.isoformat()}.</p>
+<details><summary>How ads are kept and scored</summary><p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days + {PER_CREATIVE} per extra ad using the creative (counted up to {CREATIVE_CAP} ads, so at most {PER_CREATIVE * CREATIVE_CAP} points) + 10 for multiple versions + EU reach bonus (10 at 10,000 people reached in the EU, 20 at 100,000; {eu_n} of {len(rows)} ads have EU reach{f", the highest {eu_max:,}" if eu_n else ""}).
+Ads are ranked by score inside each look; each brand shows its best {SHOW_PER_BRAND} per look. Ads under {MIN_DAYS} days are left out{cut_line}.</p></details></header>
 <nav><button class="on" data-b="">All brands</button>{chips}<select id="ang"><option value="">Any angle</option>{angles}</select></nav>
 <main>{matrix}{markets_table(out, rows, brands)}{"".join(parts) or "<p>No ads kept yet.</p>"}<p id="none" class="stats" hidden>No ads match this brand and angle.</p>
 <details><summary>Searches ({len(runs_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Brand</th><th>How</th><th>Loaded</th><th>Kept</th><th>Left out, under {MIN_DAYS} days</th><th>Note</th></tr>{runs}</table></div></details>
@@ -644,7 +639,7 @@ def main():
     write_tsv(tsv, rows, COLS)
     write_tsv(tl, types_log, TL)
     write_tsv(rl, runs_log, RL)
-    notes = {r["type"]: r for r in read_tsv(os.path.join(out, "group-notes.tsv"), ["type", "takeaway", "sher_test", "updated"])}
+    notes = {r["type"]: r for r in read_tsv(os.path.join(out, "group-notes.tsv"), ["type", "takeaway", "updated"])}
     page = html(out, name, rows, types_log, runs_log, today, notes)
     print(f"{len(rows)} ads in {tsv}\n{page} ({os.path.getsize(page) // 1024} KB)")
 

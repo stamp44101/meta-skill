@@ -52,14 +52,15 @@ Same steps as Runs 2–3, merged into the same meta-sher (124 → 220 ads).
 Stamp: the caption-based types were the wrong axis; group by how the ad was shot. All 220 grids were looked at on 34 numbered contact sheets and relabelled; the old type is kept as `angle`.
 | Look | Ads | Mostly | Still running |
 |---|---|---|---|
-| studio, minimal | 109 | Bupbes (82) | 20 (18%) |
-| casual, phone-shot | 42 | JC de JC, JUBIN STUDIO | 39 (93%) |
-| editorial | 30 | IAM COCO, Maël | 26 (87%) |
-| on location, polished | 28 | IAM COCO, JC de JC, Cherie | 23 (82%) |
-| product only, no model | 9 | Maël, JUBIN STUDIO | 8 (89%) |
-| graphic layout | 2 | other businesses | 2 |
+| studio, minimal | 115 | Bupbes (83) | 25 |
+| casual, phone-shot | 44 | JC de JC, JUBIN STUDIO | 41 |
+| editorial | 40 | IAM COCO (30) | 36 |
+| polished lookbook | 18 | JC de JC, Cherie | 13 |
+| graphic layout | 3 | JUBIN STUDIO + 2 other businesses | 3 |
 - Second and third opinions (two reviewer agents): 5 of 220 relabelled (IAM COCO concept storefront and meadow → editorial; a Cherie white room and two Viery plain-wall shots → studio). Fixed: notes claimed studio "runs longest" from medians, but 89 of its ads have ended while 82–93% of the other looks are still running, so run length is a lower bound there; notes now lead with the still-running share. Angle menu was squeezed to 22 px on phones; empty filter results showed a blank page; median was wrong for even counts; an old run JSON could overwrite looks with caption types (now kept as angle).
-- Calls that could go either way: rooms with a chair or wallpaper and plain posing went to studio; IAM COCO's nature shoots with a concept (horse, river, mosquito net) to editorial and its plain courtyard or villa sets to polished location; try-on videos shot in JC de JC's showroom to casual even though the room is staged.
+- Goal review round 1 (reviewers given only Stamp's own brief): "product only" dropped (it was about what's in the frame, not production); IAM COCO's courtyard/villa sets moved to editorial since they share its nature shoots' production; "on location" renamed "polished lookbook" so location defines nothing. Removed text that came from criteria Stamp never set: SHER test advice, the cross-look group score and rank numbers, "a campaign end, not a verdict", "promo ads are under-represented".
+- Goal review round 2: grouping PASS. Output fixes: EU reach read for all 53 ads seen in FR/DE (1 to 1,236 people, so no EU points yet; `runs/2026-11-26-eu-reach.txt`); the 180-day cap removed so days count in full (JUBIN 489 now scores above a 180-day ad); cards with no country say "not seen in the N countries checked"; "running long … not proof it sold" and the README's open decisions removed (README now lists Known limits); `sher_test` column and group-score code removed.
+- Calls that could go either way: rooms with a chair or wallpaper and plain posing went to studio; IAM COCO's nature shoots with a concept (horse, river, mosquito net) to editorial and its plain courtyard or villa sets to polished lookbook; try-on videos shot in JC de JC's showroom to casual even though the room is staged.
 
 ### Scout — 25 Nov 2026, the five SHER competitors
 | Brand | Own ads | Ads by others |
