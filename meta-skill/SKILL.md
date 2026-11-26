@@ -1,10 +1,10 @@
 ---
 name: meta-skill
-description: Collect competitors' working Meta ads (Facebook + Instagram) from the Ad Library into one living swipe file per brand (meta-<brand>), scored by how long they ran and how many ads share the creative, grouped by type. Use for Meta ad research, competitor ads, ad swipe files, or "Meta SKILL".
-version: 0.3
+description: Collect competitors' working Meta ads (Facebook + Instagram) from the Ad Library into one living swipe file per brand (meta-<brand>), scored by how long they ran and how many ads share the creative, grouped by how each ad was shot (its look). Use for Meta ad research, competitor ads, ad swipe files, or "Meta SKILL".
+version: 0.4
 ---
 
-# Meta SKILL — v0.3
+# Meta SKILL — v0.4
 
 Collects competitors' ads that kept running on Facebook and Instagram, as references for our Social Ads GTM. Every run adds to one living file and never replaces it.
 
@@ -62,15 +62,26 @@ computer zoom, region [0, 0, W, 0.35·H], save_to_disk   (W × H = the screensho
 python3 -I scripts/build.py trim <saved file> meta-<brand>/images/<id>.png
 ```
 
-`grid` lays every carousel card, or 6 frames across a video (one frame per card in a video carousel), in one row on a dark layer and reads the video length. Run it on the search page when it holds under ~100 cards. For big searches open the single-ad page `https://www.facebook.com/ads/library/?id=<id>`, `eval(window.name)`, then `grid`; if that page shows another ad of the same group (`ad not on page`), grid it from the search page. Batch about 6 ads (grid + zoom) per `browser_batch` and trim them right after, in order; saved captures can come back out of order, so before building run `python3 -I scripts/build.py check-images meta-<brand>` and swap any file whose caption shows another ad's ID. Check each grid as it comes back: the picture also tells you the type.
+`grid` lays every carousel card, or 6 frames across a video (one frame per card in a video carousel), in one row on a dark layer and reads the video length. Run it on the search page when it holds under ~100 cards. For big searches open the single-ad page `https://www.facebook.com/ads/library/?id=<id>`, `eval(window.name)`, then `grid`; if that page shows another ad of the same group (`ad not on page`), grid it from the search page. Batch about 6 ads (grid + zoom) per `browser_batch` and trim them right after, in order; saved captures can come back out of order, so before building run `python3 -I scripts/build.py check-images meta-<brand>` and swap any file whose caption shows another ad's ID. Check each grid as it comes back: the picture is what decides the look.
 
-### 4. Type every kept ad
+### 4. Label every kept ad: look first, angle second
 
-Group by the job the ad does, the way GTM SKILL's Create the list step works: merge types that do the same job, split one when its ads start to differ, and log every new type, merge, split or rename with the reason. Run 9's types were the starting point: creator-fronted (@handle at the top), new drop or collection, catalogue product cards, discount or code, back in stock, customer quote, craft or making-of, someone else's ad naming the brand. The SHER file has since split "new drop or collection" into styled look, single piece spotlight and mood, no product named (see `types-log.tsv`). Read the existing types in the TSV first and reuse them.
+`type` is the **look**: how the ad was shot, judged by looking at its snapshot grid, never from the caption. Format (carousel or video) and the place itself (café, beach) don't decide it; how produced it is does. The SHER file uses six:
+
+- **studio, minimal**: plain backdrop or a bare room, controlled light, the garment is the subject
+- **product only, no model**: packshots, hanger shots, flat-lays, a hand opening the box
+- **editorial**: a concept shoot, a built set or a dramatic place, styled like a magazine
+- **on location, polished**: a photographer in a real place, natural poses, no concept
+- **casual, phone-shot**: looks self-filmed: mirror selfies, try-ons talking to camera, snapshots
+- **graphic layout**: text-led designs, not a shoot
+
+A carousel or video that mixes looks goes where most of its frames sit. To label many ads, stack the grids into numbered contact sheets and look at them in batches. Reuse these looks; if a new one is needed, merge or split, log it in `types_log` with the reason.
+
+`angle` is what the copy sells, read from the caption: single piece spotlight, new drop or collection, styled look, mood (no product named), catalogue product cards, creator-fronted, customer quote, discount or code, someone else's ad naming the brand. It shows as a tag on each card and as a filter, not as a group.
 
 ### 5. Write the run and build
 
-Fill `type` and `image` in the draft, add `searches` (brand, how, found, kept, note) and `types_log`, save it as `meta-<brand>/runs/<date>-<brand>.json` (shape in the `build.py` docstring; `retype` moves ads already in the file to a new type), then:
+Fill `type` (look), `angle` and `image` in the draft, add `searches` (brand, how, found, kept, note) and `types_log`, save it as `meta-<brand>/runs/<date>-<brand>.json` (shape in the `build.py` docstring; `retype` moves ads already in the file to another look), then:
 
 ```
 python3 -I scripts/build.py meta-<brand> meta-<brand>/runs/<file>.json
@@ -86,20 +97,20 @@ python3 -I scripts/build.py meta-<brand> meta-<brand>/runs/<file>.json
 |---|---|
 | `meta-<brand>.tsv` | The memory: one row per kept ad, keyed by Library ID, with first seen, last seen, status (active / ended) and score |
 | `images/<id>.png` | Snapshot grid per ad |
-| `types-log.tsv` | Every type change, with the reason |
+| `types-log.tsv` | Every group change (new look, merge, split, regroup), with the reason |
 | `runs-log.tsv` | Every brand search: date, how, found, kept, note (brands with no ads get a row too) |
 | `geo-log.tsv` | Every per-country check: brand, country, results, cards loaded, kept ads seen |
 | `geo-ids.json` | The ID order the last SET line used (CHECK returns indexes into it) |
-| `group-notes.tsv` | Per type: what it is and what SHER should test |
+| `group-notes.tsv` | Per look: what it is and what SHER should test |
 | `runs/*.json` | Each run's raw input |
 | `meta-<brand>.html` | Rebuilt every run; opens on its own |
 
 **Score** = days (up to 180) + 5 per extra ad using the creative (up to 10) + 10 for "multiple versions" + EU reach bonus (10 at 10k, 20 at 100k). An active ad counts days up to the day it was last seen live.
-**Group rank** = average of the best ad of each of its top 3 brands + 20 per extra brand running that type. Each brand shows its best 4 ads per group.
+**Group rank** = average of the best ad of each of its top 3 brands + 20 per extra brand running that look. Each brand shows its best 4 ads per group.
 
-After a run that adds or changes types, update `group-notes.tsv` (type, takeaway, sher_test, updated): what the type is in facts from the page, and one thing SHER should test. Keep both to two sentences.
+After a run that adds ads or changes looks, update `group-notes.tsv` (type, takeaway, sher_test, updated): what the look is in facts from the page, and one thing SHER should test. Keep both to two sentences.
 
-Send the HTML with one line per brand (found → kept), and any types merged or split.
+Send the HTML with one line per brand (found → kept), and any looks merged or split.
 
 ## Iteration
 

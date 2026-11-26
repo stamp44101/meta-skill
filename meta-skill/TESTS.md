@@ -48,6 +48,18 @@ Same steps as Runs 2–3, merged into the same meta-sher (124 → 220 ads).
 - Four brands kept nothing: every own ad is under 30 days; their 30+ day matches were other businesses sharing the word. The Viery page runs no ads; its 3 kept ads are Shopee affiliate posts (kept as `other`), and the all-country search is ~4,200 Slovak "viery" ads, so the search was narrowed to VN. New type: `customer quote` (RUE de RUE, 2 ads). Group notes rewritten where the new brands made them wrong ("only Bupbes", "one ad only").
 - Found by running it: the extension redacts 16-digit IDs as card numbers, so export writes them as `12345678x…` and import strips the `x`. Import read only the first text part of a batch result (0 ads found); it now joins all parts. Viery's big pages (US, GB, FR, DE: 150–230 unrelated ads) froze tabs at 15 scroll rounds; 10 rounds plus a read-only re-check after the freeze worked, marked `done=false`.
 
+### Regroup — 26 Nov 2026, by look (v0.4)
+Stamp: the caption-based types were the wrong axis; group by how the ad was shot. All 220 grids were looked at on 34 numbered contact sheets and relabelled; the old type is kept as `angle`.
+| Look | Ads | Mostly | Median run |
+|---|---|---|---|
+| studio, minimal | 106 | Bupbes (82) | 91 days |
+| casual, phone-shot | 43 | JC de JC, JUBIN STUDIO | 59 |
+| on location, polished | 32 | IAM COCO, JC de JC, Cherie | 55 |
+| editorial | 28 | IAM COCO, Maël | 37 |
+| product only, no model | 9 | Maël, JUBIN STUDIO | 92 |
+| graphic layout | 2 | other businesses | 141 |
+- Calls that could go either way: rooms with a chair or wallpaper and plain posing went to studio; IAM COCO's nature shoots with a concept (horse, river, mosquito net) to editorial and its plain courtyard or villa sets to polished location; try-on videos shot in JC de JC's showroom to casual even though the room is staged.
+
 ### Scout — 25 Nov 2026, the five SHER competitors
 | Brand | Own ads | Ads by others |
 |---|---|---|

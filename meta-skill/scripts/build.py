@@ -10,7 +10,8 @@
 
 <out_dir> is meta-<brand>/ (e.g. meta-sher/). It holds:
     meta-<brand>.tsv   one row per kept ad, keyed by Library ID (the memory)
-    types-log.tsv      every new type, merge, split and rename, with the reason
+    types-log.tsv      every new look (group), merge, split, rename and regroup, with the reason
+    group-notes.tsv    one note per look: what it is, SHER test
     runs-log.tsv       every brand search: when, how, found, kept
     geo-log.tsv        every per-country check: brand, country, results, cards loaded, kept ads seen
     images/<id>.png    one snapshot grid per ad
@@ -21,18 +22,20 @@ run.json (written by the agent during a run):
   "date": "2026-11-25",
   "searches": [{"brand": "Bupbes", "how": "page 1234 | phrase \\"bupbes\\"", "found": 830, "kept": 41, "note": ""}],
   "ads": [{"id": "...", "brand": "Bupbes", "advertiser": "Bupbes", "page_id": "...", "owner": "own|other",
-           "type": "creator-fronted", "status": "active|ended", "start": "YYYY-MM-DD", "end": "",
+           "type": "on location, polished", "angle": "single piece spotlight", "status": "active|ended", "start": "YYYY-MM-DD", "end": "",
            "creatives": 2, "versions": false, "format": "video", "media": 1, "video_sec": 13,
            "eu_reach": "", "countries": "", "body": "...", "cta": "", "image": "images/<id>.png", "note": ""}],
   "types_log": [{"action": "new|merge|split|rename", "from": "a, b", "to": "c", "reason": "..."}],
   "retype": {"<id>": "<type>"}
 }
+`type` is the look: how the ad was shot, judged from the snapshot (studio, editorial, casual phone...),
+never from the caption. `angle` is what the copy sells (one piece, a new drop...), shown as a tag and filter.
 Only the standard library and Pillow are used.
 """
 import base64, csv, io, json, math, os, sys
 from datetime import date
 
-COLS = ["library_id", "brand", "advertiser", "page_id", "owner", "type", "status", "start", "end",
+COLS = ["library_id", "brand", "advertiser", "page_id", "owner", "type", "angle", "status", "start", "end",
         "days", "creatives", "versions", "format", "media", "video_sec", "eu_reach", "countries",
         "score", "body", "cta", "image", "creative_hash", "first_seen", "last_seen", "note"]
 MIN_DAYS = 30        # decision 2: newer ads are never saved
@@ -158,12 +161,13 @@ def merge(out, run, rows, types_log, runs_log):
             hit["last_seen"] = today.isoformat()
             updated += 1
         elif hit:
-            keep_type = hit.get("type")
+            keep_type, keep_angle = hit.get("type"), hit.get("angle")
             for k, v in a.items():
-                if k in ("library_id", "first_seen", "note", "type") or v in ("", None):
+                if k in ("library_id", "first_seen", "note", "type", "angle") or v in ("", None):
                     continue
                 hit[k] = v
             hit["type"] = a.get("type") or keep_type
+            hit["angle"] = a.get("angle") or keep_angle
             hit["last_seen"] = today.isoformat()
             updated += 1
         else:
@@ -391,7 +395,7 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
             cells.append(f'<td>{len(mine)} <small>· {max(mine)}</small></td>' if mine else '<td class="nil">–</td>')
         mrows.append(f'<tr><th>{esc(t)}</th>{"".join(cells)}</tr>')
     totals = "".join(f'<td><b>{sum(r["brand"] == b for r in rows)}</b></td>' for b in brands)
-    matrix = (f'<div class="scroll"><table class="mx"><tr><th>type \\ brand: ads · best score</th>{"".join(f"<th>{esc(b)}</th>" for b in brands)}</tr>'
+    matrix = (f'<div class="scroll"><table class="mx"><tr><th>look \\ brand: ads · best score</th>{"".join(f"<th>{esc(b)}</th>" for b in brands)}</tr>'
               f'{"".join(mrows)}<tr><th>all</th>{totals}</tr></table></div>')
     parts = []
     for gi, (gscore, t, gbrands, ads) in enumerate(ranked, 1):
@@ -408,11 +412,13 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
                     f'EU reach {int(float(r["eu_reach"])):,}' if r.get("eu_reach") else "",
                     ("seen in " + r["countries"]) if r.get("countries") else ""]
             flags = [f for f in (r.get("_flight"), r.get("_copies")) if f]
+            angle = f'<div class="angle">{esc(r["angle"])}</div>' if r.get("angle") else ""
             cards.append(
-                f'<article data-brand="{esc(r["brand"])}"{" class=more" if extra else ""}><div class="snap">{img}</div><div class="info">'
+                f'<article data-brand="{esc(r["brand"])}" data-angle="{esc(r.get("angle", ""))}"{" class=more" if extra else ""}><div class="snap">{img}</div><div class="info">'
                 f'<div class="top"><span class="rank">#{i}</span><b>{esc(r["brand"])}</b>'
                 f'<span class="tag {esc(r.get("owner", ""))}">{"own ad" if r.get("owner") == "own" else "by " + esc(r.get("advertiser", ""))}</span>'
                 f'<span class="score">{r["score"]}</span></div>'
+                f'{angle}'
                 f'<div class="meta">{" · ".join(esc(m) for m in meta if m)}</div>'
                 f'{"".join(f"<div class=flag>{esc(x)}</div>" for x in flags)}'
                 f'<p>{esc(r.get("body", ""))}</p>'
@@ -435,6 +441,8 @@ def html(out, name, rows, types_log, runs_log, today, notes=None):
     cut_line = (" (left out: " + ", ".join(f"{b} {n}" for b, n in cut) + ")") if cut else ""
     eu_n = sum(1 for r in rows if r.get("eu_reach"))
     chips = "".join(f'<button data-b="{esc(b)}">{esc(b)}</button>' for b in brands)
+    from collections import Counter as _C
+    angles = "".join(f'<option value="{esc(a)}">{esc(a)} ({n})</option>' for a, n in _C(r.get("angle", "") for r in rows).most_common() if a)
     page = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(name)} — competitor Meta ads</title><style>
 :root{{--bg:#faf9f7;--fg:#1d1b19;--mute:#77716b;--line:#e6e1da;--card:#fff;--acc:#8a2b3a}}
@@ -453,7 +461,8 @@ article{{background:var(--card);border:1px solid var(--line);border-radius:10px;
 .meta{{color:var(--mute);font-size:12.5px;margin:4px 0}}article p{{margin:6px 0;font-size:13px;max-height:5.8em;overflow:hidden}}a{{color:var(--acc)}}
 details{{margin-top:30px}}table{{border-collapse:collapse;width:100%;font-size:13px}}td,th{{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top}}
 .stats{{color:var(--mute);font-size:13px;margin:-4px 0 8px}}.note{{background:var(--card);border-left:3px solid var(--acc);padding:6px 12px;margin:0 0 12px;border-radius:4px}}.note p{{margin:4px 0}}
-.flag{{font-size:12px;color:var(--acc);margin:2px 0}}article.more{{display:none}}section.open article.more{{display:block}}
+.flag{{font-size:12px;color:var(--acc);margin:2px 0}}.angle{{display:inline-block;font-size:11.5px;color:var(--mute);background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:0 8px;margin:4px 0 0}}
+nav select{{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:99px;padding:4px 10px;font:inherit}}article.more{{display:none}}section.open article.more{{display:block}}
 .showmore{{margin:10px 0;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:6px;padding:5px 12px;cursor:pointer}}
 .mx{{width:auto;margin:14px 0 4px}}.mx td,.mx th{{padding:4px 10px}}.mx td{{text-align:center}}.mx td small{{color:var(--mute)}}.mx .nil{{color:var(--line)}}
 :root[data-theme=dark]{{--bg:#151413;--fg:#eee9e3;--mute:#9c958e;--line:#2c2926;--card:#1e1c1a;--acc:#e48a99}}:root[data-theme=light]{{--bg:#faf9f7;--fg:#1d1b19;--mute:#77716b;--line:#e6e1da;--card:#fff;--acc:#8a2b3a}}
@@ -462,16 +471,19 @@ details{{margin-top:30px}}table{{border-collapse:collapse;width:100%;font-size:1
 </style></head><body>
 <header><h1>{esc(name)} — competitor Meta ads that kept running</h1>
 <p>Facebook + Instagram only. Kept: live {MIN_DAYS}+ days. Score = days (up to {DAY_CAP}) + {PER_CREATIVE} per extra ad using the creative (counted up to {CREATIVE_CAP} ads, so at most {PER_CREATIVE * CREATIVE_CAP} points) + 10 for multiple versions + EU reach bonus ({eu_n} of {len(rows)} ads have EU reach data{', so it moves no score yet' if not eu_n else ''}).
-Groups ranked by the best ad of each of their top {TOP_N} brands + {PER_BRAND} per extra brand, so one big brand can't carry a type. Each brand shows its best {SHOW_PER_BRAND} per group. Running long means the brand kept paying, not proof it sold. Short promo ads rarely reach {MIN_DAYS} days, so offers are under-represented here{cut_line}. Rebuilt {today.isoformat()} · {len(rows)} ads · {len(ranked)} types.</p></header>
-<nav><button class="on" data-b="">All brands</button>{chips}</nav>
+Groups ranked by the best ad of each of their top {TOP_N} brands + {PER_BRAND} per extra brand, so one big brand can't carry a look. Each brand shows its best {SHOW_PER_BRAND} per group. Running long means the brand kept paying, not proof it sold. Short promo ads rarely reach {MIN_DAYS} days, so offers are under-represented here{cut_line}. Rebuilt {today.isoformat()} · {len(rows)} ads · {len(ranked)} looks.</p>
+<p>Grouped by the look: how the ad was shot, judged from the pictures (studio, editorial, polished location, casual phone-shot, product only), not by what the caption says. What the copy sells is the small tag on each card; filter by it below.</p></header>
+<nav><button class="on" data-b="">All brands</button>{chips}<select id="ang"><option value="">Any angle</option>{angles}</select></nav>
 <main>{matrix}{markets_table(out, rows, brands)}{"".join(parts) or "<p>No ads kept yet.</p>"}
 <details><summary>Searches ({len(runs_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Brand</th><th>How</th><th>Loaded</th><th>Kept</th><th>Left out, under {MIN_DAYS} days</th><th>Note</th></tr>{runs}</table></div></details>
-<details><summary>Type changes ({len(types_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Action</th><th>From</th><th>To</th><th>Reason</th></tr>{tlog}</table></div></details>
+<details><summary>Group changes ({len(types_log)})</summary><div class="scroll"><table><tr><th>Date</th><th>Action</th><th>From</th><th>To</th><th>Reason</th></tr>{tlog}</table></div></details>
 </main><div id="lb"><img alt=""></div>
 <script>
-document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
-document.querySelectorAll('article').forEach(a=>a.style.display=!b.dataset.b||a.dataset.brand===b.dataset.b?(b.dataset.b?'block':''):'none');
-document.querySelectorAll('section').forEach(s=>s.style.display=[...s.querySelectorAll('article')].some(a=>a.style.display!=='none')?'':'none')}});
+let fb='',fa='';const ang=document.getElementById('ang');
+function apply(){{const on=fb||fa;document.querySelectorAll('article').forEach(a=>a.style.display=(!fb||a.dataset.brand===fb)&&(!fa||a.dataset.angle===fa)?(on?'block':''):'none');
+document.querySelectorAll('section').forEach(s=>s.style.display=[...s.querySelectorAll('article')].some(a=>a.style.display!=='none')?'':'none')}}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));fb=b.dataset.b;apply()}});
+ang.onchange=()=>{{fa=ang.value;apply()}};
 document.querySelectorAll('.showmore').forEach(b=>b.onclick=()=>{{b.closest('section').classList.add('open');b.remove()}});
 const lb=document.getElementById('lb');document.querySelectorAll('.snap img').forEach(i=>i.onclick=()=>{{lb.querySelector('img').src=i.src;lb.style.display='flex'}});
 lb.onclick=()=>lb.style.display='none';document.onkeydown=e=>{{if(e.key==='Escape')lb.style.display='none'}};
@@ -492,7 +504,7 @@ def import_export(path, brand, own_names, today):
     One ad per creative: ads from the same advertiser with the same copy, format and card
     count are one creative shown under several Library IDs. The draft keeps the longest-running
     ID, the widest dates and the largest creative count, and lists the other IDs in the note.
-    The agent fills in type (and owner where the guess is wrong) and the image paths.
+    The agent fills in type (the look, from the snapshot), angle (from the copy), owner where the guess is wrong, and the image paths.
     """
     text = open(path, encoding="utf-8").read()
     if path.endswith(".json"):
@@ -513,7 +525,7 @@ def import_export(path, brand, own_names, today):
         # only videos and carousels are folded together here; build.py still merges exact image matches
         key = (adv.lower(), norm(body), fmt, media) if fmt != "image" else (lid,)
         ad = {"id": lid, "brand": brand, "advertiser": adv, "page_id": pid,
-              "owner": "own" if adv.lower() in own else "other", "type": "", "status": status,
+              "owner": "own" if adv.lower() in own else "other", "type": "", "angle": "", "status": status,
               "start": start, "end": end, "days": int(days), "creatives": int(n or 1), "versions": ver == "1",
               "format": fmt, "media": int(media or 1), "video_sec": vsec, "eu_flag": eu == "1", "body": body, "image": ""}
         g = groups.get(key)
